@@ -73,6 +73,7 @@ class DBHelper {
     await clearCart();
     final db = await DBHelper.database();
     final res = await db.insert('cartTable', cartItem.toJson());
+    // db.close();
     return res;
   }
 

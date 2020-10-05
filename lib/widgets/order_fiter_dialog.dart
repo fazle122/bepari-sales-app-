@@ -135,7 +135,6 @@ class _OrderFilterDialogState extends BaseState<OrderFilterDialog> {
                     onChanged: (dt) {
                       setState(() {
                         _from = dt;
-                        print(_from.toString());
                       });
                     },
                     decoration: InputDecoration(
@@ -178,7 +177,6 @@ class _OrderFilterDialogState extends BaseState<OrderFilterDialog> {
                       onChanged: (dt) {
                         setState(() {
                           _to = dt;
-                          print(_to.toString());
                         });
                       },
                       decoration: InputDecoration(

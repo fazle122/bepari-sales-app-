@@ -25,7 +25,7 @@ abstract class BaseState<T extends StatefulWidget> extends State<T> {
     try {
       await _connectivity.checkConnectivity();
     } on PlatformException catch (e) {
-      print(e.toString());
+      // print(e.toString());
     }
 
     // If the widget was removed from the tree while the asynchronous platform
@@ -52,7 +52,7 @@ abstract class BaseState<T extends StatefulWidget> extends State<T> {
       await updateConnectionStatus().then((bool isConnected) =>
           setState(() {
             isOnline = isConnected;
-            print('Connected: ' + isOnline.toString());
+            // print('Connected: ' + isOnline.toString());
             if (!isOnline) {
               showDialog(
                 context: context,

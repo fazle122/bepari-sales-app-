@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sales_app/providers/cart.dart';
-import 'package:sales_app/providers/product.dart';
 //import 'package:sales_app/providers/productCategories.dart';
 import 'package:sales_app/providers/products.dart';
 //import 'package:sales_app/providers/shipping_address.dart';

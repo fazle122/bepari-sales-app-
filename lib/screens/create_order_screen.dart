@@ -9,6 +9,7 @@ import 'package:sales_app/data_helper/local_db_helper.dart';
 import 'package:sales_app/providers/cart.dart';
 import 'package:sales_app/providers/orders.dart';
 import 'package:sales_app/providers/shipping_address.dart';
+import 'package:sales_app/screens/order_list_screen.dart';
 import 'package:sales_app/screens/orders_screen.dart';
 import 'package:sales_app/screens/products_overview_screen.dart';
 import 'package:sales_app/widgets/app_drawer.dart';
@@ -21,6 +22,10 @@ import 'package:sales_app/widgets/update_shippingAddress_dialog.dart';
 
 class CreateOrderScreen extends StatefulWidget {
   static const routeName = '/shipping_address';
+
+  final Cart cart;
+  final invoiceId;
+  CreateOrderScreen({this.cart,this.invoiceId});
 
 
   @override
@@ -45,6 +50,10 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
   String selectedCustomerId;
   int salesSource = 6;
   int overAllDiscount = 0;
+  double invoiceVat = 0.0;
+
+  double individualDiscount = 0.0;
+
 
 
 
@@ -118,7 +127,7 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
   @override
   Widget build(BuildContext context) {
    final customerInfo = Provider.of<Orders>(context);
-    final cart = ModalRoute.of(context).settings.arguments as Cart;
+    final cartInfo = ModalRoute.of(context).settings.arguments as Cart;
     return Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
@@ -132,64 +141,6 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
             : SingleChildScrollView(
           child: Column(
             children: <Widget>[
-              Container(
-                height: 30.0,
-                color: Colors.grey[300],
-                child: Center(child: Text('Delivery date')),
-              ),
-              SizedBox(
-                height: 5.0,
-              ),
-              Container(
-                width: MediaQuery.of(context).size.width,
-                height: 50.0,
-//                      padding: EdgeInsets.only(left: 5.0,right: 5.0),
-                child: Row(
-                  children: <Widget>[
-                    Container(
-                        height: 48.0,
-                        width: MediaQuery.of(context).size.width * 1/5,
-                        color: Theme.of(context).primaryColor,
-                        child:IconButton(
-                          icon:Icon(Icons.date_range),
-                          color: Colors.white,
-                          onPressed: (){
-
-                          },
-                        )
-                    ),
-                    Container(
-                      width: MediaQuery.of(context).size.width * 4/5,
-                      child: DateTimeField(
-                        textAlign: TextAlign.start,
-                        format: format,
-                        onChanged: (dt) {
-                          setState(() {
-                            deliveryDate = dt;
-                            invoiceDate = dt;
-                            dueDate = dt;
-                          });
-                        },
-                        decoration: InputDecoration(
-                            labelText: 'Select date',
-                            contentPadding:
-                            EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
-
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.horizontal(left: Radius.zero))
-                        ),
-                        onShowPicker: (context, currentValue) {
-                          return showDatePicker(
-                              context: context,
-                              firstDate: DateTime(1900),
-                              initialDate: currentValue ?? DateTime.now(),
-                              lastDate: DateTime(2100));
-                        },
-                      ),
-                    )
-                  ],
-                ),
-              ),
 
 
               SizedBox(
@@ -203,41 +154,11 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
                   onChanged: (newValue) {
                     setState(() {
                       selectedCustomerId = newValue;
-                      print(newValue);
 
                     });
                   },
                   items: _addCustomerMenuItems(customerInfo.getCustomersId),
                 )
-
-
-                // DropdownButtonFormField(
-                //
-                //   isExpanded: true,
-                //   decoration: InputDecoration(
-                //     prefixIcon: Icon(
-                //       Icons.person,
-                //       color: Theme.of(context).primaryColor,
-                //     ),
-                //     border: OutlineInputBorder(),
-                //
-                //   ),
-                //   hint: Text('Add customer'),
-                //   value: customerInfo.customers,
-                //   onSaved: (value){
-                //     // customerInfo.customers = value;
-                //   },
-                //   validator: (value){
-                //     if (value == null) {
-                //       return 'please choose district';
-                //     }
-                //     return null;
-                //   },
-                //   onChanged: (newValue) {
-                //
-                //   },
-                //   items: _addCustomerMenuItems(customerInfo),
-                // ),
               ),
               SizedBox(
                 height: 10.0,
@@ -250,7 +171,6 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
                     onChanged: (newValue) {
                       setState(() {
                         selectedBranchId = newValue;
-                        print(newValue);
 
                       });
                     },
@@ -271,6 +191,10 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
                       )
                   )
               ),
+
+              SizedBox(
+                height: 20.0,
+              ),
               Container(
                 height: 40.0,
                 width: 150.0,
@@ -279,191 +203,157 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
                       borderRadius: BorderRadius.circular(25.0),
                       side: BorderSide(color: Colors.grey)),
                   onPressed: () async{
+                    Cart cart = widget.invoiceId == null ?  cartInfo:widget.cart;
 
-                    print('customer_id --' + selectedCustomerId);
-                    print('branch_id --' + selectedBranchId);
-                    print('sub_total --' + cart.totalAmount.toString());
-                    print('invoice_amount --' + 'NA');
-                    print('invoice_vat --' + 'NA');
-                    print('total_before_vat --' + 'NA');
-                    print('total_discount --' + 'NA');
-                    print('delivery_date --' + deliveryDate.toString());
-                    print('due_date --' + dueDate.toString());
-                    print('invoice_date --' + invoiceDate.toString());
-                    print('overall_discount --' + overAllDiscount.toString());
-                    print('sales_source --' + salesSource.toString());
-                    print('invoice_date --' + invoiceDate.toString());
-                    print('invoice_date --' + invoiceDate.toString());
-
-                    if(cart.items.length > 0) {
+                    if (cart.items.length > 0) {
                       List<Cart> ct = [];
                       ct = cart.items.map((e) => Cart(id: e.id, cartItem: e)).toList();
                       Map<String,dynamic>  data = Map();
-                     for (int i = 0; i < ct.length; i++) {
-                       data.putIfAbsent('product_id[$i]', () => ct[i].cartItem.productId);
-                       data.putIfAbsent('quantity[$i]', () =>ct[i].cartItem.quantity);
-                       data.putIfAbsent('unit_price[$i]', () =>ct[i].cartItem.price);
-                       data.putIfAbsent('is_non_inventory[$i]', () =>ct[i].cartItem.isNonInventory);
+                      for (int i = 0; i < ct.length; i++) {
+                        if(widget.invoiceId != null){
+                          data.putIfAbsent('invoice_detail_id[$i]', () => ct[i].cartItem.id);
+                        }
+                        data.putIfAbsent('product_id[$i]', () => ct[i].cartItem.productId);
+                        data.putIfAbsent('quantity[$i]', () =>ct[i].cartItem.quantity);
+                        data.putIfAbsent('vat_rate[$i]', () =>ct[i].cartItem.vatRate.toString());
+                        data.putIfAbsent('total_vat[$i]', () =>ct[i].cartItem.vatRate!= null?(ct[i].cartItem.vatRate * ct[i].cartItem.quantity):0.0);
+                        data.putIfAbsent('item_total_discount[$i]', () =>ct[i].cartItem.perUnitDiscount !=null ?ct[i].cartItem.perUnitDiscount*ct[i].cartItem.quantity:0.0);
+                        data.putIfAbsent('total_amount[$i]', () =>
+                        ct[i].cartItem.perUnitDiscount !=null ?
+                        (ct[i].cartItem.price*ct[i].cartItem.quantity)-(ct[i].cartItem.perUnitDiscount*ct[i].cartItem.quantity):
+                        ct[i].cartItem.price*ct[i].cartItem.quantity);
+                        data.putIfAbsent('accounts_group_id[$i]', () => ct[i].cartItem.salesAccountsGroupId);
+                        data.putIfAbsent('is_non_inventory[$i]', () =>ct[i].cartItem.isNonInventory);
+                        data.putIfAbsent('total_price[$i]', () =>
+                        ct[i].cartItem.vatRate!= null?
+                        (ct[i].cartItem.quantity*ct[i].cartItem.price) + (ct[i].cartItem.vatRate * ct[i].cartItem.quantity)
+                            :(ct[i].cartItem.quantity*ct[i].cartItem.price));
+                        data.putIfAbsent('unit_price[$i]', () =>ct[i].cartItem.price);
+                        data.putIfAbsent('discount_id[$i]', () =>ct[i].cartItem.discountId!= null?ct[i].cartItem.discountId.toString():0);
+                        data.putIfAbsent('per_unit_discount[$i]', () =>ct[i].cartItem.perUnitDiscount !=null ?ct[i].cartItem.perUnitDiscount:0.0);
+                        data.putIfAbsent('discount_type[$i]', () =>ct[i].cartItem.discountType!= null?ct[i].cartItem.discountType:'amount');
+                      }
 
-                       data.putIfAbsent('vat_rate[$i]', () =>ct[i].cartItem.vatRate.toString());
-                       data.putIfAbsent('total_vat[$i]', () =>(ct[i].cartItem.vatRate * ct[i].cartItem.quantity).toString());
-                       data.putIfAbsent('item_total_discount[$i]', () =>(ct[i].cartItem.perUnitDiscount*ct[i].cartItem.quantity).toString());
-                       data.putIfAbsent('total_amount[$i]', () =>0);
-                       data.putIfAbsent('account_group_id[$i]', () =>0);
-                       data.putIfAbsent('total_price[$i]', () =>0);
-                       data.putIfAbsent('discount_id[$i]', () =>ct[i].cartItem.discount.toString());
-                       data.putIfAbsent('per_unit_discount[$i]', () =>0);
-                       data.putIfAbsent('discount_type[$i]', () =>ct[i].cartItem.discountType);
-                     }
+                      for(int i = 0;i<ct.length; i++){
+                        invoiceVat += ct[i].cartItem.vatRate!= null?(ct[i].cartItem.vatRate * ct[i].cartItem.quantity):0.0;
+                        individualDiscount += ct[i].cartItem.perUnitDiscount != null ? ct[i].cartItem.perUnitDiscount*ct[i].cartItem.quantity:0.0;
+
+                      }
+
+                      var totalDiscount = individualDiscount+overAllDiscount;
+                      var totalBeforeVat = cart.totalAmount.toDouble() - totalDiscount.toDouble();
+                      var invoiceAmount = invoiceVat.toDouble() + totalBeforeVat.toDouble();
+
+                      // print('customer_id --' + selectedCustomerId);
+                      // print('branch_id --' + selectedBranchId);
+                      // print('sub_total --' + cart.totalAmount.toString());
+                      // print('invoice_amount --' + invoiceAmount.toString());
+                      // print('invoice_vat --' + invoiceVat.toString());
+                      // print('total_before_vat --' +  totalBeforeVat.toString());
+                      // print('total_discount --' + totalDiscount.toString());
+                      // print('delivery_date --' + deliveryDate.toString());
+                      // print('due_date --' + dueDate.toString());
+                      // print('invoice_date --' + invoiceDate.toString());
+                      // print('overall_discount --' + overAllDiscount.toString());
+                      // print('sales_source --' + salesSource.toString());
+                      // print(data.toString());
+
+
+                      data.putIfAbsent('customer_id', () => selectedCustomerId);
+                      data.putIfAbsent('branch_id', () => selectedBranchId);
+                      data.putIfAbsent('sub_total', () => cart.totalAmount);
+                      data.putIfAbsent('invoice_amount', () => invoiceAmount);
+                      data.putIfAbsent('invoice_vat', () => invoiceVat);
+                      data.putIfAbsent('total_before_vat', () => totalBeforeVat);
+                      data.putIfAbsent('total_discount', () => totalDiscount);
+                      data.putIfAbsent('delivery_date', () => deliveryDate.toString());
+                      data.putIfAbsent('due_date', () => dueDate.toString());
+                      data.putIfAbsent('invoice_date', () => invoiceDate.toString());
+                      data.putIfAbsent('overall_discount', () => overAllDiscount);
+                      data.putIfAbsent('sales_source', () => salesSource);
 
                       data.putIfAbsent('comment', () => _commentController.text);
                       data.putIfAbsent('ship_to_customer_address', () => shipToCustomerAddress);
 
-                      print(data.toString());
+                      FormData formData;
+                      // if (selectedAddressId != null) {
+                        setState(() {
+                          _isLoading = true;
+                        });
+                        var response;
+                        if(widget.invoiceId == null){
+                          formData = FormData.fromMap(data);
+                          response = await Provider.of<Orders>(context, listen: false).createInvoice(formData);
+                        }else{
+                          data.putIfAbsent('invoice_id', () => widget.invoiceId);
+                          formData = FormData.fromMap(data);
+                          response = await Provider.of<Orders>(context, listen: false).updateInvoice(formData,widget.invoiceId);
+                        }
+                        if (response != null) {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                          await cart.clearCartTable();
+                          Navigator.of(context).pushNamed(ProductsOverviewScreen.routeName);
+                          Flushbar(
+                            duration: Duration(seconds: 10),
+                            margin: EdgeInsets.only(bottom: 2),
+                            padding: EdgeInsets.all(10),
+                            borderRadius: 8,
+                            backgroundColor: Colors.green.shade400,
+                            boxShadows: [
+                              BoxShadow(
+                                color: Colors.black45,
+                                offset: Offset(3, 3),
+                                blurRadius: 3,
+                              ),
+                            ],
+                            dismissDirection: FlushbarDismissDirection.HORIZONTAL,
+                            forwardAnimationCurve: Curves.fastLinearToSlowEaseIn,
+                            title: 'Order confirmation',
+                            message: response['msg'],
+                            mainButton: FlatButton(
+                              child: Text('view order'),
+                              onPressed: () {
+                                Navigator.of(context).pushNamed(OrderListScreen.routeName);
+                              },
+                            ),
+
+                          )..show(context);
+                        } else {
+                          Flushbar(
+                            duration: Duration(seconds: 5),
+                            margin: EdgeInsets.only(bottom: 2),
+                            padding: EdgeInsets.all(10),
+                            borderRadius: 8,
+                            backgroundColor: Colors.red.shade400,
+                            boxShadows: [
+                              BoxShadow(
+                                color: Colors.black45,
+                                offset: Offset(3, 3),
+                                blurRadius: 3,
+                              ),
+                            ],
+                            dismissDirection: FlushbarDismissDirection.HORIZONTAL,
+                            forwardAnimationCurve: Curves.fastLinearToSlowEaseIn,
+                            title: 'Order confirmation',
+                            message: 'Something wrong. Please try again',
+                          )..show(context);
+                        }
                     }else{
                       _scaffoldKey.currentState.showSnackBar(_snackBar('Please add item to cart'));
                     }
+
                   },
                   color: Theme.of(context).primaryColor,
                   textColor: Colors.white,
-                  child: Text("Create Order".toUpperCase(),
+                  child: Text("Create Invoice".toUpperCase(),
                       style: TextStyle(fontSize: 14)),
                 ),
               ),
               SizedBox(
                 height: 10.0,
               ),
-//              SizedBox(
-//                height: 20.0,
-//              ),
-//              Container(
-//                height: 40.0,
-//                width: 150.0,
-//                child: RaisedButton(
-//                  shape: RoundedRectangleBorder(
-//                      borderRadius: BorderRadius.circular(25.0),
-//                      side: BorderSide(color: Colors.grey)),
-//                  onPressed: () async {
-//                    FocusScope.of(context).requestFocus(new FocusNode());
-//                    if (cart.items.length > 0) {
-//                      List<Cart> ct = [];
-//                      ct = cart.items
-//                          .map((e) => Cart(id: e.id, cartItem: e))
-//                          .toList();
-//                      Map<String,dynamic>  data = Map();
-//                      for (int i = 0; i < ct.length; i++) {
-//                        data.putIfAbsent('product_id[$i]', () => ct[i].cartItem.productId);
-//                        data.putIfAbsent('quantity[$i]', () =>ct[i].cartItem.quantity);
-//                        data.putIfAbsent('unit_price[$i]', () =>ct[i].cartItem.price);
-//                        data.putIfAbsent('is_non_inventory[$i]', () =>ct[i].cartItem.isNonInventory);
-//                        data.putIfAbsent('discount[$i]', () =>ct[i].cartItem.discount);
-//                      }
-//                      data.putIfAbsent('customer_shipping_address_id', () =>selectedAddressId);
-//                    FormData formData = FormData.fromMap(data);
-//
-//                    if (selectedAddressId != null) {
-//                        setState(() {
-//                          _isLoading = true;
-//                        });
-//                        final response = await Provider.of<Orders>(
-//                            context,
-//                            listen: false)
-//                            .addOrder(formData);
-//                        if (response != null) {
-//                          setState(() {
-//                            _isLoading = false;
-//                          });
-//                          await cart.clearCartTable();
-//                          Navigator.of(context).pushNamed(
-//                              ProductsOverviewScreen
-//                                  .routeName);
-//                          Flushbar(
-//                            duration: Duration(seconds: 10),
-//                            margin: EdgeInsets.only(bottom: 2),
-//                            padding: EdgeInsets.all(10),
-//                            borderRadius: 8,
-//                            backgroundColor: Colors.green.shade400,
-//                            boxShadows: [
-//                              BoxShadow(
-//                                color: Colors.black45,
-//                                offset: Offset(3, 3),
-//                                blurRadius: 3,
-//                              ),
-//                            ],
-//                            // All of the previous Flushbars could be dismissed by swiping down
-//                            // now we want to swipe to the sides
-//                            dismissDirection: FlushbarDismissDirection.HORIZONTAL,
-//                            // The default curve is Curves.easeOut
-//                            forwardAnimationCurve: Curves.fastLinearToSlowEaseIn,
-//                            title: 'Order confirmation',
-//                            message: response['msg'],
-//                            mainButton: FlatButton(
-//                              child: Text('view order'),
-//                              onPressed: () {
-//                                Navigator.of(context).pushNamed(
-//                                    OrdersScreen.routeName);
-//                              },
-//                            ),
-//
-//                          )..show(context);
-////                          showDialog(
-////                              context: context,
-////                              barrierDismissible: false,
-////                              builder: (ctx) => AlertDialog(
-////                                title: Text('Order confirmation'),
-////                                content: Text(response['msg']),
-////                                actions: <Widget>[
-////                                  FlatButton(
-////                                    child: Text('view order'),
-////                                    onPressed: () {
-////                                      Navigator.of(context).pushNamed(
-////                                          OrdersScreen.routeName);
-////                                    },
-////                                  ),
-////                                  FlatButton(
-////                                    child: Text('create another'),
-////                                    onPressed: () {
-////                                      Navigator.of(context).pushNamed(
-////                                          ProductsOverviewScreen
-////                                              .routeName);
-////                                    },
-////                                  )
-////                                ],
-////                              ));
-//                        } else {
-//                          Flushbar(
-//                            duration: Duration(seconds: 5),
-//                            margin: EdgeInsets.only(bottom: 2),
-//                            padding: EdgeInsets.all(10),
-//                            borderRadius: 8,
-//                            backgroundColor: Colors.red.shade400,
-//                            boxShadows: [
-//                              BoxShadow(
-//                                color: Colors.black45,
-//                                offset: Offset(3, 3),
-//                                blurRadius: 3,
-//                              ),
-//                            ],
-//                            dismissDirection: FlushbarDismissDirection.HORIZONTAL,
-//                            forwardAnimationCurve: Curves.fastLinearToSlowEaseIn,
-//                            title: 'Order confirmation',
-//                            message: 'Something wrong. Please try again',
-//                          )..show(context);
-//                        }
-//                      } else {
-//                        _scaffoldKey.currentState.showSnackBar(_snackBar(
-//                            'Please select a delivery address or create new one'));
-//                      }
-//                    }else{
-//                      _scaffoldKey.currentState.showSnackBar(_snackBar('Please add item to cart'));
-//                    }
-//                  },
-//                  color: Theme.of(context).primaryColor,
-//                  textColor: Colors.white,
-//                  child: Text("CONFIRM ORDER".toUpperCase(),
-//                      style: TextStyle(fontSize: 14)),
-//                ),
-//              ),
             ],
           ),
         ));

@@ -147,7 +147,6 @@ class ShippingAddress with ChangeNotifier{
 
   Future<String> fetchAreaName(String areaId) async {
     var area = await ApiService.getAreaNameFromLocalDB(areaId);
-    print(area.toString());
     return area.toString();
 //    notifyListeners();
   }
@@ -339,7 +338,6 @@ class ShippingAddress with ChangeNotifier{
   }
 
   Future<void> fetchProfileInfo() async {
-    print('fetch profile');
 
     var url = 'http://new.bepari.net/demo/api/V1.0/access-control/user/show-profile';
     Map<String, String> headers = {

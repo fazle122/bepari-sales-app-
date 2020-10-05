@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:sales_app/providers/cart.dart';
+import 'package:sales_app/providers/products.dart';
 
 class OrderItem {
   final int id;
@@ -61,6 +62,8 @@ class Orders with ChangeNotifier {
   Map<String, dynamic> _branchInfo = Map();
   final String authToken;
   final String userid;
+  double _deliveryCharge;
+
 
   Orders(this.authToken, this.userid, this._orders);
 
@@ -96,10 +99,19 @@ class Orders with ChangeNotifier {
     return lastPageCount;
   }
 
-  Future<Map<String, dynamic>> addOrder(FormData formData) async {
+  double get deliveryCharge{
+    return _deliveryCharge;
+  }
+
+  set deliveryCharge(value){
+    _deliveryCharge = value;
+    notifyListeners();
+  }
+
+  Future<Map<String,dynamic>> defaultDeliveryCharge(FormData formData) async {
     Dio dioService = new Dio();
     final url =
-        ApiService.BASE_URL + 'api/V1.1/accounts/invoice/create-invoice';
+        ApiService.BASE_URL + 'api/V1.1/accounts/invoice/send-delivery-charge';
 
     dioService.options.headers = {
       'Authorization': 'Bearer ' + authToken,
@@ -112,7 +124,59 @@ class Orders with ChangeNotifier {
     );
 
     final responseData = response.data;
-    print(responseData);
+    // print(responseData);
+    notifyListeners();
+    if (response.statusCode == 200) {
+      _deliveryCharge = responseData['data']['del_charge'].toDouble();
+      notifyListeners();
+      return response.data;
+    } else {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> createInvoice(FormData formData) async {
+    Dio dioService = new Dio();
+    final url =
+        ApiService.BASE_URL + 'api/V1.1/accounts/invoice/create';
+
+    dioService.options.headers = {
+      'Authorization': 'Bearer ' + authToken,
+      'Content-Type': 'application/json',
+    };
+
+    final Response response = await dioService.post(
+      url,
+      data: formData,
+    );
+
+    final responseData = response.data;
+    // print(responseData);
+    notifyListeners();
+    if (response.statusCode == 200) {
+      return response.data;
+    } else {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> updateInvoice(FormData formData,var invoiceId) async {
+    Dio dioService = new Dio();
+    final url =
+        ApiService.BASE_URL + 'api/V1.1/accounts/invoice/edit/$invoiceId';
+
+    dioService.options.headers = {
+      'Authorization': 'Bearer ' + authToken,
+      'Content-Type': 'application/json',
+    };
+
+    final Response response = await dioService.post(
+      url,
+      data: formData,
+    );
+
+    final responseData = response.data;
+    // print(responseData);
     notifyListeners();
     if (response.statusCode == 200) {
       return response.data;
@@ -124,7 +188,7 @@ class Orders with ChangeNotifier {
   void commentOrder(String orderId, String comment) async {
     var responseData;
     final url = ApiService.BASE_URL +
-        'api/V1.3/accounts/order-delivery/comment-order-delivery/$orderId';
+        'api/V1.1/accounts/order-delivery/comment-order-delivery/$orderId';
 
     Map<String, String> headers = {
       'Authorization': 'Bearer ' + authToken,
@@ -213,7 +277,6 @@ class Orders with ChangeNotifier {
 
   Future<List<OrderItem>> fetchAndSetOrders(
       Map<String, dynamic> filters, int pageCount) async {
-    print('fetch orders');
     String url =
         'http://new.bepari.net/demo/api/V1.1/accounts/invoice/list?page_size=10&page=$pageCount';
     if (filters != null) {
@@ -266,7 +329,7 @@ class Orders with ChangeNotifier {
       notifyListeners();
       return _orders;
     } catch (error) {
-      throw (error);
+       throw (error);
     }
   }
 
@@ -351,7 +414,6 @@ class Orders with ChangeNotifier {
   }
 
   Future<void> fetchCompletedOrders() async {
-    print('fetch orders');
     final url =
         'http://new.bepari.net/demo/api/V1.3/accounts/invoice/list-invoice';
 

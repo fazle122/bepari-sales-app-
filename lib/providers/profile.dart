@@ -54,7 +54,6 @@ class Profile with ChangeNotifier{
   }
 
   Future<void> fetchProfileInfo() async {
-    print('fetch profile');
 
     var url = 'http://new.bepari.net/demo/api/V1.1/access-control/user/show-profile';
     Map<String, String> headers = {

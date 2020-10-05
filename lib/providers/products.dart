@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:sales_app/data_helper/api_service.dart';
-import 'package:sales_app/providers/product.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -117,7 +116,6 @@ class Products with ChangeNotifier {
   }
 
   Future<List<Product>> searchAndSetProducts({String keyword}) async {
-    print('test');
     var url =
         'http://new.bepari.net/demo/api/V1.0/product-catalog/product/list-product?page_size=100&keyword=$keyword';
     try {
