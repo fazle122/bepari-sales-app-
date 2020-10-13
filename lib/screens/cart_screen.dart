@@ -9,12 +9,12 @@ import 'package:sales_app/providers/cart.dart';
 import 'package:sales_app/providers/orders.dart';
 import 'package:sales_app/providers/products.dart';
 import 'package:sales_app/screens/auth_screen.dart';
-import 'package:sales_app/screens/create_order_screen.dart';
+import 'package:sales_app/screens/create_invoice_screen.dart';
 import 'package:sales_app/screens/order_list_screen.dart';
 import 'package:sales_app/screens/products_overview_screen.dart';
 import 'package:sales_app/widgets/app_drawer.dart';
 import 'package:sales_app/widgets/cart_item.dart';
-import 'package:sales_app/widgets/confirm_order_dialog.dart';
+import 'package:sales_app/widgets/confirm_invoice_dialog.dart';
 import 'package:sales_app/widgets/update_quantity_dialog.dart';
 
 class CartScreen extends StatefulWidget {

@@ -160,6 +160,30 @@ class Orders with ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>> createInvoiceWithPayment(FormData formData) async {
+    Dio dioService = new Dio();
+    final url = ApiService.BASE_URL + 'api/V1.1/accounts/invoice/create-sales-app';
+
+    dioService.options.headers = {
+      'Authorization': 'Bearer ' + authToken,
+      'Content-Type': 'application/json',
+    };
+
+    final Response response = await dioService.post(
+      url,
+      data: formData,
+    );
+
+    final responseData = response.data;
+    // print(responseData);
+    notifyListeners();
+    if (response.statusCode == 200) {
+      return response.data;
+    } else {
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>> updateInvoice(FormData formData,var invoiceId) async {
     Dio dioService = new Dio();
     final url =
@@ -201,6 +225,32 @@ class Orders with ChangeNotifier {
       final http.Response response = await http.post(
         url,
         body: json.encode(data),
+        headers: headers,
+      );
+      responseData = json.decode(response.body);
+      if (responseData['error'] != null) {
+        throw HttpException(responseData['error']['message']);
+      }
+
+      notifyListeners();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  void payOrder(String invoiceId) async {
+    var responseData;
+    final url =
+        ApiService.BASE_URL + 'api/V1.1/accounts/invoice/receive-cash/$invoiceId';
+
+    Map<String, String> headers = {
+      'Authorization': 'Bearer ' + authToken,
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      final http.Response response = await http.post(
+        url,
         headers: headers,
       );
       responseData = json.decode(response.body);
@@ -317,7 +367,7 @@ class Orders with ChangeNotifier {
             invoiceAmount: allOrders[i]['invoice_amount'],
             totalDue: allOrders[i]['total_due'],
             dateTime: DateTime.parse(allOrders[i]['invoice_date']),
-            status: allOrders[i]['del_status'],
+            status: allOrders[i]['status'].toString(),
           );
           loadedOrders.add(orders);
         }

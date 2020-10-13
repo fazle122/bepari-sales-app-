@@ -24,9 +24,9 @@ class _OrderFilterDialogState extends BaseState<OrderFilterDialog> {
   Map<String,dynamic> _defaultFilters = Map();
 
   static const Map<String, dynamic> status = {
-    "Pending": 0,
-    "Partial Paid":2,
-    "Paid": 3,
+    "Full Due": 0,
+    "Partial Paid":4,
+    "Full Paid": 5,
   };
 
 

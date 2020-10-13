@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:sales_app/providers/auth.dart';
 import 'package:sales_app/screens/auth_screen.dart';
+import 'package:sales_app/screens/due_orders_screen.dart';
 import 'package:sales_app/screens/order_list_screen.dart';
+import 'package:sales_app/screens/pending_order_list_screen.dart';
 import 'package:sales_app/screens/products_overview_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -102,7 +104,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 title: Text('Orders'),
                 onTap: () {
                   Navigator.of(context)
-                      .pushReplacementNamed(OrderListScreen.routeName);
+                      .pushReplacementNamed(PendingOrderListScreen.routeName);
                 },
               )
             ],
@@ -116,7 +118,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 title: Text('Due orders'),
                 onTap: () async {
                   Navigator.of(context)
-                      .pushReplacementNamed(OrderListScreen.routeName);
+                      .pushReplacementNamed(DueOrderListScreen.routeName);
                 },
               )
             ],

@@ -81,11 +81,12 @@ class OrderDetailScreen extends StatefulWidget {
                         padding: EdgeInsets.all(8),
                         child: ListTile(
 //                          title: Text('Total amount:  ' + 'BDT\$${(orderDetailData.singOrderItem.totalDue.toString())}'),
-                          title: Text('Total amount:  ' + orderDetailData.singOrderItem.totalDue.toString() + ' BDT'),
-                          subtitle: Text(
-                            DateFormat('EEEE, MMM d, ').format(orderDetailData.singOrderItem.dateTime) +
-                                convert12(DateFormat('hh:mm').format(orderDetailData.singOrderItem.dateTime)),
-                          ),
+                          title: Text('Total amount:  ' + orderDetailData.singOrderItem.invoiceAmount + ' BDT'),
+                          subtitle: Text('Due : ' +orderDetailData.singOrderItem.totalDue.toString() + ' BDT'),
+                          // subtitle: Text(
+                          //   DateFormat('EEEE, MMM d, ').format(orderDetailData.singOrderItem.dateTime) +
+                          //       convert12(DateFormat('hh:mm').format(orderDetailData.singOrderItem.dateTime)),
+                          // ),
                         )
                       ),
                     ),
@@ -95,19 +96,48 @@ class OrderDetailScreen extends StatefulWidget {
                     Expanded(
                         child: ListView.builder(
                           itemCount: orderDetailData.singOrderItem.invoiceItem.length,
-                          itemBuilder: (context, i) => ListTile(
-                            title: Text('Item name:' + orderDetailData.singOrderItem.invoiceItem[i].productName),
-                            subtitle: ListTile(
-                              title: Text('Quantity:'  + orderDetailData.singOrderItem.invoiceItem[i].quantity.toString()),
-//                              subtitle: Text(
-//                                  'price:' + orderDetailData.singOrderItem.invoiceItem[i].quantity.toString() + 'x'
-//                                      + orderDetailData.singOrderItem.invoiceItem[i].unitPrice.toString()  + ' = '
-//                                      + (orderDetailData.singOrderItem.invoiceItem[i].quantity * orderDetailData.singOrderItem.invoiceItem[i].unitPrice).toString()
-//                                      + ' BDT'
-//
-//                              ),
-                            ),
-                          ),
+                          itemBuilder: (context, i) =>
+
+                              Card(
+                                // shape: RoundedRectangleBorder(
+                                //   borderRadius: BorderRadius.circular(15.0),
+                                // ),
+                                shape: StadiumBorder(
+                                  side: BorderSide(
+                                    color: Colors.grey[200],
+                                    width: 2.0,
+                                  ),
+                                ),
+                                margin: EdgeInsets.all(10),
+                                child: Column(
+                                  children: <Widget>[
+                                    ListTile(
+                                      title: Center(child:Text(orderDetailData.singOrderItem.invoiceItem[i].productName)),
+                                      subtitle: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          Text('Quantity : ' + orderDetailData.singOrderItem.invoiceItem[i].quantity),
+                                          SizedBox(width: 30.0,),
+                                          Text('Total : \$${(double.parse(orderDetailData.singOrderItem.invoiceItem[i].unitPrice) * double.parse(orderDetailData.singOrderItem.invoiceItem[i].quantity))}'),
+                                        ],
+                                      )
+                                    ),
+                                  ],
+                                ),
+                              )
+//                               ListTile(
+//                             title: Text('Item name:' + orderDetailData.singOrderItem.invoiceItem[i].productName),
+//                             subtitle: ListTile(
+//                               title: Text('Quantity:'  + orderDetailData.singOrderItem.invoiceItem[i].quantity.toString()),
+// //                              subtitle: Text(
+// //                                  'price:' + orderDetailData.singOrderItem.invoiceItem[i].quantity.toString() + 'x'
+// //                                      + orderDetailData.singOrderItem.invoiceItem[i].unitPrice.toString()  + ' = '
+// //                                      + (orderDetailData.singOrderItem.invoiceItem[i].quantity * orderDetailData.singOrderItem.invoiceItem[i].unitPrice).toString()
+// //                                      + ' BDT'
+// //
+// //                              ),
+//                             ),
+//                           ),
                         )
                     ),
                     Container(
@@ -115,7 +145,7 @@ class OrderDetailScreen extends StatefulWidget {
                       child: Row(
                         mainAxisAlignment: orderDetailData.singOrderItem.status == null? MainAxisAlignment.spaceEvenly:MainAxisAlignment.center,
                         children: <Widget>[
-                          orderDetailData.singOrderItem.status == '0' ?
+                          orderDetailData.singOrderItem.status != '4' ?
                           Container(
                             height: 40.0,
                             width: 140.0,
@@ -157,7 +187,7 @@ class OrderDetailScreen extends StatefulWidget {
                                           ),
                                           actions: <Widget>[
                                             FlatButton(
-                                              child: Text('Paid'),
+                                              child: Text('Cancel'),
                                               onPressed: () {
                                                 Navigator.of(
                                                     context)
@@ -165,9 +195,9 @@ class OrderDetailScreen extends StatefulWidget {
                                               },
                                             ),
                                             FlatButton(
-                                              child: Text('Finished'),
+                                              child: Text('Paid & Finished'),
                                               onPressed: () async{
-                                                await Provider.of<Orders>(context, listen: false).cancelOrder(orderId.toString(), cancelCommentController.text);
+                                                await Provider.of<Orders>(context, listen: false).payOrder(orderId.toString());
                                                 Navigator.pushReplacement(context, MaterialPageRoute(
                                                     builder: (context) => OrderListScreen()
                                                 ));
@@ -181,7 +211,7 @@ class OrderDetailScreen extends StatefulWidget {
                             ),
                           ):SizedBox(width: 0.0,height: 0.0,),
                           SizedBox(width: 20.0,),
-                          orderDetailData.singOrderItem.status == '0' ?
+                          orderDetailData.singOrderItem.status != '4' ?
                           Container(
                             height: 40.0,
                             width: 140.0,
@@ -288,7 +318,7 @@ class OrderDetailScreen extends StatefulWidget {
                       child: Row(
                         mainAxisAlignment: orderDetailData.singOrderItem.status == null? MainAxisAlignment.spaceEvenly:MainAxisAlignment.center,
                         children: <Widget>[
-                          orderDetailData.singOrderItem.status == '0' || orderDetailData.singOrderItem.status == '2'?
+                          // orderDetailData.singOrderItem.status != '0'?SizedBox(width: 0.0,height: 0.0,):
                           Container(
                             height: 40.0,
                             width: 140.0,
@@ -383,9 +413,9 @@ class OrderDetailScreen extends StatefulWidget {
                               color: Theme.of(context).primaryColor,
                               textColor: Colors.white,
                             ),
-                          ):SizedBox(width: 0.0,height: 0.0,),
+                          ),
                           SizedBox(width: 20.0,),
-                          orderDetailData.singOrderItem.status == '0' || orderDetailData.singOrderItem.status == '2'?
+                          // orderDetailData.singOrderItem.status != '0'?SizedBox(width: 0.0,height: 0.0,):
                           Container(
                             height: 40.0,
                             width: 140.0,
@@ -449,7 +479,7 @@ class OrderDetailScreen extends StatefulWidget {
                               child: Text("Cancel".toUpperCase(),
                                   style: TextStyle(fontSize: 14)),
                             ),
-                          ):SizedBox(width: 0.0,height: 0.0,),
+                          ),
                         ],
                       ),
                     ),

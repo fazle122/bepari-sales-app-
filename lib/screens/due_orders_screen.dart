@@ -15,14 +15,14 @@ import 'package:sales_app/widgets/order_fiter_dialog.dart';
 
 
 
-class OrderListScreen extends StatefulWidget {
-  static const routeName = '/orders';
+class DueOrderListScreen extends StatefulWidget {
+  static const routeName = '/due-orders';
 
   @override
-  _OrderListScreenState createState() => _OrderListScreenState();
+  _DueOrderListScreenState createState() => _DueOrderListScreenState();
 }
 
-class _OrderListScreenState extends BaseState<OrderListScreen> {
+class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
   var _isInit = true;
   var _isLoading = false;
   Map<String,dynamic> filters = Map();
@@ -197,7 +197,7 @@ class _OrderListScreenState extends BaseState<OrderListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('All Orders'),
+          title: Text('Due Orders'),
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.add),
@@ -269,7 +269,9 @@ class _OrderListScreenState extends BaseState<OrderListScreen> {
               return _buildProgressIndicator();
             }else{
 //            return ChangeNotifierProvider.value(value: null,child:Text(''));
-              return Card(
+              return
+                finalOrders[i].status == '4' || finalOrders[i].status == '1' ?
+              Card(
                 margin: EdgeInsets.all(10),
                 child: Column(
                   children: <Widget>[
@@ -444,7 +446,7 @@ class _OrderListScreenState extends BaseState<OrderListScreen> {
                                         ));
                               },
                             ),
-                            IconButton(
+                            finalOrders[i].status == '1' ?IconButton(
                               icon: Icon(Icons.edit),
                               onPressed: () async{
                                 List<Map<String,dynamic>> cartItemFromOrder;
@@ -459,16 +461,16 @@ class _OrderListScreenState extends BaseState<OrderListScreen> {
                                 });
                                 final cart = Provider.of<Cart>(context,listen: false);
 
-                                  setState(() {
-                                    cart.isUpdateMode = true;
-                                  });
+                                setState(() {
+                                  cart.isUpdateMode = true;
+                                });
 
                                 await Provider.of<Cart>(context, listen: false).fetchAndSetCartItems1();
 
                                 // Navigator.of(context).pushNamed(OrderUpdateScreen.routeName, arguments: finalOrders[i].id);
                                 Navigator.of(context).pushNamed(CartScreen.routeName, arguments: finalOrders[i].id);
                               },
-                            ),
+                            ):SizedBox(width: 0.0,height: 0.0,),
                           ],
                         ),
                       ),
@@ -480,7 +482,7 @@ class _OrderListScreenState extends BaseState<OrderListScreen> {
                     ),
                   ],
                 ),
-              );
+              ):SizedBox(width: 0.0,height: 0.0,);
             }
           },
         )
@@ -499,284 +501,5 @@ class _OrderListScreenState extends BaseState<OrderListScreen> {
     );
   }
 
-
-}
-
-
-
-class OrderItemList extends StatelessWidget {
-
-  final List<OrderItem> orderListItems;
-  final ScrollController scrollController;
-  final bool isPerformingRequest;
-
-
-
-  OrderItemList(
-      {this.orderListItems, this.scrollController, this.isPerformingRequest});
-//
-//  @override
-//  _OrderItemListState createState() => _OrderItemListState();
-//
-//}
-//
-//class _OrderItemListState extends State<OrderItemList>{
-  var _isInit = true;
-
-//  TextEditingController commentController;
-//  TextEditingController deliveryCommentController;
-//  TextEditingController amountController;
-//
-//  @override
-//  void initState() {
-//    commentController = TextEditingController();
-//    deliveryCommentController = TextEditingController();
-//    amountController = TextEditingController();
-//    super.initState();
-//  }
-
-  String convert12(String str) {
-    String finalTime;
-    int h1 = int.parse(str.substring(0, 1)) - 0;
-    int h2 = int.parse(str.substring(1, 2));
-    int hh = h1 * 10 + h2;
-
-    String Meridien;
-    if (hh < 12) {
-      Meridien = " AM";
-    } else
-      Meridien = " PM";
-    hh %= 12;
-    if (hh == 0 && Meridien == ' PM') {
-      finalTime = '12' + str.substring(2);
-    } else {
-      finalTime = hh.toString() + str.substring(2);
-    }
-    finalTime = finalTime + Meridien;
-    return finalTime;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return
-      Container(
-        child:  orderListItems != null && orderListItems.length > 0
-            ? ListView.builder(
-          controller: scrollController,
-          itemCount: orderListItems.length +1,
-          itemBuilder: (context, i) {
-            if(i == orderListItems.length){
-              return _buildProgressIndicator();
-            }else{
-//            return ChangeNotifierProvider.value(value: null,child:Text(''));
-              return Card(
-                margin: EdgeInsets.all(10),
-                child: Column(
-                  children: <Widget>[
-                    ListTile(
-                      title: Text(
-                        DateFormat('EEEE, MMM d, ').format(
-                            orderListItems[i].dateTime) +
-                            convert12(DateFormat('hh:mm').format(
-                                orderListItems[i].dateTime)),
-                      ),
-                      subtitle: Text('Total amount: ' +
-                          '\$${orderListItems[i].invoiceAmount}'),
-                      trailing: Container(
-                        width: 180,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-//                              orderData.orders[i].status != null ?SizedBox(width: 0.0,height: 0.0,):
-                            IconButton(
-                              icon: Icon(Icons.done),
-                              onPressed: () async {
-//                                              Navigator.pushReplacement(context, MaterialPageRoute(
-//                                                  builder: (context) =>SignaturePage(id:orderData.orders[i].id.toString())
-//                                              ));
-                                showDialog(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder: (context) =>
-                                        AlertDialog(
-                                          title: Center(child:Text(
-                                              'Confirm order')),
-                                          content:
-                                          Container(
-                                            height: 150,
-                                            child: Column(
-                                              children: <Widget>[
-                                                Row(
-//                                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: <Widget>[
-                                                    Text('Amount'),
-                                                    SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.number,
-//                                                      controller: amountController,
-                                                        decoration: InputDecoration(hintText: 'enter order amount'),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                                Row(
-//                                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: <Widget>[
-                                                    Text('Comment'),
-                                                    SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.multiline,
-                                                        maxLines: 2,
-//                                                      controller: deliveryCommentController,
-                                                        decoration: InputDecoration(hintText: 'write a comment'),
-                                                      ),
-                                                    )
-                                                  ],
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                          actions: <Widget>[
-                                            FlatButton(
-                                              child: Text('Continue'),
-                                              onPressed: () async{
-//                                                              Navigator.pushReplacement(context, MaterialPageRoute(
-//                                                                builder: (context) =>SignaturePage(id:orderData.orders[i].id.toString(), comment:deliveryCommentController.text,amount:double.parse(amountController.text))
-//                                                              ));
-//                                              await Provider.of<Orders>(context, listen: false).deliverOrder(orderData.orders[i].id.toString(), deliveryCommentController.text,double.parse(amountController.text),null);
-//                                              if (!mounted) return;
-//                                              setState(() {
-//                                                _isInit = true;
-//                                              });
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(true);
-                                              },
-                                            ),
-//                                                          FlatButton(
-//                                                            child: Text('Back'),
-//                                                            onPressed: () {
-//                                                              Navigator.of(
-//                                                                  context)
-//                                                                  .pop(false);
-//                                                            },
-//                                                          ),
-                                            FlatButton(
-                                              child: Text('Cancel'),
-                                              onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(true);
-                                              },
-                                            ),
-                                          ],
-                                        ));
-                              },
-                            ),
-                             // orderData.orders[i].status != null ?SizedBox(width: 0.0,height: 0.0,):
-
-                            IconButton(
-                              icon: Icon(Icons.cancel),
-                              onPressed: () async {
-                                showDialog(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder: (context) =>
-                                        AlertDialog(
-                                          title: Center(child: Text('Cancel order')),
-                                          content: Container(
-                                            height: 70,
-                                            child: Column(
-                                              children: <Widget>[
-                                                Row(
-//                                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: <Widget>[
-                                                    Text('Comment'),
-                                                    SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.multiline,
-                                                        maxLines: 2,
-//                                                      controller: commentController,
-                                                        decoration: InputDecoration(hintText: 'write a comment'),
-                                                      ),
-                                                    )
-                                                  ],
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                          actions: <Widget>[
-                                            FlatButton(
-                                              child: Text('Cancel'),
-                                              onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(false);
-                                              },
-                                            ),
-                                            FlatButton(
-                                              child: Text('Confirm'),
-                                              onPressed: () async{
-                                              },
-                                            ),
-                                          ],
-                                        ));
-                              },
-                            ),
-
-                          ],
-                        ),
-                      ),
-                      onTap: () {
-//                          Navigator.of(context).pushNamed(
-//                              OrderDetailScreen.routeName,
-//                              arguments: orderData.orders[i].id);
-                      },
-                    ),
-                  ],
-                ),
-              );
-            }
-          },
-        )
-            : Center(
-          child: Text('No pending order'),
-        ),
-
-      );
-  }
-
-  Widget _buildProgressIndicator() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Center(
-        child: Opacity(
-          opacity: isPerformingRequest ? 1.0 : 0.0,
-          child: CircularProgressIndicator(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressIndicator1() {
-    return Padding(
-      padding: const EdgeInsets.only(top:50,left:160),
-      child: Center(
-        child: Opacity(
-          opacity: isPerformingRequest ? 1.0 : 0.0,
-          child: CircularProgressIndicator(),
-        ),
-      ),
-    );
-  }
 
 }

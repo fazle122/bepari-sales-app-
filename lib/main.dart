@@ -8,11 +8,13 @@ import 'package:sales_app/providers/profile.dart';
 import 'package:sales_app/providers/shipping_address.dart';
 import 'package:sales_app/screens/auth_screen.dart';
 import 'package:sales_app/screens/cart_screen.dart';
+import 'package:sales_app/screens/due_orders_screen.dart';
 import 'package:sales_app/screens/order_detail_screen.dart';
 import 'package:sales_app/screens/order_list_screen.dart';
 import 'package:sales_app/screens/order_update_screen.dart';
+import 'package:sales_app/screens/pending_order_list_screen.dart';
 import 'package:sales_app/screens/products_overview_screen.dart';
-import 'package:sales_app/screens/create_order_screen.dart';
+import 'package:sales_app/screens/create_invoice_screen.dart';
 import 'package:sales_app/screens/splash_screen.dart';
 
 void main() => runApp(MyApp());
@@ -57,7 +59,7 @@ class MyApp extends StatelessWidget {
             theme: ThemeData(
                 primarySwatch: Colors.teal, accentColor: Colors.blueGrey),
             home: auth.isAuth
-                ? OrderListScreen()
+                ? PendingOrderListScreen()
                 : FutureBuilder(
               future: auth.tryAutoLogin(),
               builder: (ctx, authResultSnapshot) =>
@@ -71,6 +73,8 @@ class MyApp extends StatelessWidget {
               AuthScreen.routeName: (context) => AuthScreen(),
               ProductsOverviewScreen.routeName: (context) => ProductsOverviewScreen(),
               OrderListScreen.routeName: (context) => OrderListScreen(),
+              PendingOrderListScreen.routeName: (context) => PendingOrderListScreen(),
+              DueOrderListScreen.routeName: (context) => DueOrderListScreen(),
               OrderDetailScreen.routeName:(context) => OrderDetailScreen(),
               // OrderUpdateScreen.routeName:(context) => OrderUpdateScreen(),
               CartScreen.routeName: (context) => CartScreen(),
