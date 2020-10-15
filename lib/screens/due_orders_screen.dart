@@ -1,4 +1,3 @@
-
 import 'package:sales_app/base_state.dart';
 import 'package:sales_app/data_helper/local_db_helper.dart';
 import 'package:sales_app/providers/cart.dart';
@@ -12,8 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_app/widgets/order_fiter_dialog.dart';
-
-
+import 'package:toast/toast.dart';
 
 class DueOrderListScreen extends StatefulWidget {
   static const routeName = '/due-orders';
@@ -25,8 +23,7 @@ class DueOrderListScreen extends StatefulWidget {
 class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
   var _isInit = true;
   var _isLoading = false;
-  Map<String,dynamic> filters = Map();
-
+  Map<String, dynamic> filters = Map();
 
   ScrollController _scrollController = new ScrollController();
   int pageCount = 1;
@@ -45,6 +42,8 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
     cancelCommentController = TextEditingController();
     deliveryCommentController = TextEditingController();
     amountController = TextEditingController();
+    filters.putIfAbsent('status_array[0]', () => 1);
+    filters.putIfAbsent('status_array[1]', () => 4);
     super.initState();
   }
 
@@ -56,9 +55,9 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
         setState(() {
           _isLoading = true;
         });
-        Provider.of<Cart>(context,listen: false).fetchAndSetCartItems1();
+        Provider.of<Cart>(context, listen: false).fetchAndSetCartItems1();
         Provider.of<Orders>(context, listen: false)
-            .fetchAndSetOrders(filters,pageCount)
+            .fetchAndSetOrders(filters, [1, 4], pageCount)
             .then((data) {
           setState(() {
             finalOrders = data;
@@ -79,7 +78,7 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
         setState(() {
           pageCount += 1;
         });
-        getOrderData(filters,pageCount);
+        getOrderData(filters, pageCount);
       }
 //      }
     });
@@ -87,16 +86,15 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
     super.didChangeDependencies();
   }
 
-  List<OrderItem> getOrderData(Map<String,dynamic> filters,int pageCount) {
+  List<OrderItem> getOrderData(Map<String, dynamic> filters, int pageCount) {
     if (_isInit) {
       if (!isPerformingRequest) {
         setState(() {
           isPerformingRequest = true;
-        }
-        );
+        });
       }
       Provider.of<Orders>(context, listen: false)
-          .fetchAndSetOrders(filters,pageCount)
+          .fetchAndSetOrders(filters, [1, 4], pageCount)
           .then((data) {
         isPerformingRequest = false;
         if (data == null || data.isEmpty) {
@@ -111,15 +109,12 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
             lastItemId = data.last.id;
           });
         }
-
       });
 //      }
     }
     _isInit = false;
     return finalOrders;
   }
-
-
 
   void animateScrollBump() {
     double edge = 50.0;
@@ -133,13 +128,15 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
     }
   }
 
-  getData(Map<String,dynamic> filters){
-    if(_isInit) {
+  getData(Map<String, dynamic> filters) {
+    if (_isInit) {
       if (!mounted) return;
       setState(() {
         _isLoading = true;
       });
-      Provider.of<Orders>(context,listen: false).fetchAndSetOrders(filters,1).then((_){
+      Provider.of<Orders>(context, listen: false)
+          .fetchAndSetOrders(filters, [1, 4], 1)
+          .then((_) {
         if (!mounted) return;
         setState(() {
           _isLoading = false;
@@ -190,9 +187,6 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
     );
   }
 
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -201,7 +195,7 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.add),
-              onPressed: (){
+              onPressed: () {
                 Navigator.pushNamed(context, ProductsOverviewScreen.routeName);
               },
             ),
@@ -213,7 +207,7 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
 //                    break;
                   case 'FILTER':
                     var newFilter = await _orderFilterDialog();
-                    if(newFilter != null){
+                    if (newFilter != null) {
                       setState(() {
                         pageCount = 1;
                         finalOrders = [];
@@ -221,9 +215,8 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
                         _isInit = true;
                       });
                     }
-                    getOrderData(filters,1);
+                    getOrderData(filters, 1);
                     break;
-
                 }
               },
               itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
@@ -241,255 +234,221 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
         ),
         drawer: AppDrawer(),
         body: _isLoading
-            ? Center(child: CircularProgressIndicator(),)
+            ? Center(
+                child: CircularProgressIndicator(),
+              )
             : Container(
 //          height: MediaQuery.of(context).size.height * 7/10,
-          child: Column(
-            children: <Widget>[
-              Expanded(
-                  child: queryItemListDataWidget(context)
-              ),
-
-            ],
-          ),
-        )
-
-    );
+                child: Column(
+                  children: <Widget>[
+                    Expanded(child: queryItemListDataWidget(context)),
+                  ],
+                ),
+              ));
   }
 
   Widget queryItemListDataWidget(BuildContext context) {
     if (finalOrders.isNotEmpty) //has data & performing/not performing
       return Container(
-        child:  finalOrders != null && finalOrders.length > 0
+        child: finalOrders != null && finalOrders.length > 0
             ? ListView.builder(
-          controller: _scrollController,
-          itemCount: finalOrders.length +1,
-          itemBuilder: (context, i) {
-            if(i == finalOrders.length){
-              return _buildProgressIndicator();
-            }else{
+                controller: _scrollController,
+                itemCount: finalOrders.length + 1,
+                itemBuilder: (context, i) {
+                  if (i == finalOrders.length) {
+                    return _buildProgressIndicator();
+                  } else {
 //            return ChangeNotifierProvider.value(value: null,child:Text(''));
-              return
-                finalOrders[i].status == '4' || finalOrders[i].status == '1' ?
-              Card(
-                margin: EdgeInsets.all(10),
-                child: Column(
-                  children: <Widget>[
-                    ListTile(
-                      title: Text(
-                        DateFormat('EEEE, MMM d, ').format(
-                            finalOrders[i].dateTime) +
-                            convert12(DateFormat('hh:mm').format(
-                                finalOrders[i].dateTime)),
-                      ),
-                      subtitle: Text('Total amount: ' +
-                          '\$${finalOrders[i].invoiceAmount}'),
-                      trailing: Container(
-                        width: 150,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            finalOrders[i].status != null ?SizedBox(width: 0.0,height: 0.0,):
-                            IconButton(
-                              icon: Icon(Icons.done),
-                              onPressed: () async {
-                                showDialog(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder: (context) =>
-                                        AlertDialog(
-                                          title: Center(child:Text(
-                                              'Confirm order')),
-                                          content:
-                                          Container(
-                                            height: 150,
-                                            child: Column(
-                                              children: <Widget>[
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: <Widget>[
-                                                    Text('Amount'),
-                                                    SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.number,
-                                                        controller: amountController,
-                                                        decoration: InputDecoration(hintText: 'enter order amount'),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: <Widget>[
-                                                    Text('Comment'),
-                                                    SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.multiline,
-                                                        maxLines: 2,
-                                                        controller: deliveryCommentController,
-                                                        decoration: InputDecoration(hintText: 'write a comment'),
-                                                      ),
-                                                    )
-                                                  ],
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                          actions: <Widget>[
-                                            FlatButton(
-                                              child: Text('Continue'),
-                                              onPressed: () async{
-                                                await Provider.of<Orders>(context, listen: false).deliverOrder(finalOrders[i].id.toString(), deliveryCommentController.text,double.parse(amountController.text),null);
-                                                if (!mounted) return;
-                                                setState(() {
-                                                  _isInit = true;
-                                                  _isLoading = true;
-
-                                                });
-                                                Provider.of<Orders>(context, listen: false)
-                                                    .fetchAndSetOrders(filters,pageCount)
-                                                    .then((data) {
-                                                  setState(() {
-                                                    finalOrders = data;
-                                                    _isLoading = false;
-                                                  });
-                                                });
-                                                _isInit = false;
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(true);
-                                              },
-                                            ),
-                                            FlatButton(
-                                              child: Text('Cancel'),
-                                              onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(true);
-                                              },
-                                            ),
-                                          ],
-                                        ));
-                              },
+                    return
+                        // finalOrders[i].status == '4' || finalOrders[i].status == '1' ?
+                        Card(
+                      margin: EdgeInsets.all(10),
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            title: Text(
+                              DateFormat('EEEE, MMM d, ')
+                                      .format(finalOrders[i].dateTime) +
+                                  convert12(DateFormat('hh:mm')
+                                      .format(finalOrders[i].dateTime)),
                             ),
-                            finalOrders[i].status != null ?SizedBox(width: 0.0,height: 0.0,):
-                            IconButton(
-                              icon: Icon(Icons.cancel),
-                              onPressed: () async {
-                                showDialog(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder: (context) =>
-                                        AlertDialog(
-                                          title: Center(child: Text('Cancel order')),
-                                          content: Container(
-                                            height: 70,
-                                            child: Column(
-                                              children: <Widget>[
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: <Widget>[
-                                                    Text('Comment'),
-                                                    SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.multiline,
-                                                        maxLines: 2,
-                                                        controller: cancelCommentController,
-                                                        decoration: InputDecoration(hintText: 'write a comment'),
+                            subtitle: Text('Total amount: ' +
+                                '\$${finalOrders[i].invoiceAmount}'),
+                            trailing: Container(
+                              width: 120,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  finalOrders[i].status == '1'
+                                      ? IconButton(
+                                          icon: Icon(Icons.cancel),
+                                          onPressed: () async {
+                                            showDialog(
+                                                context: context,
+                                                barrierDismissible: false,
+                                                builder: (context) =>
+                                                    AlertDialog(
+                                                      title: Center(
+                                                          child: Text(
+                                                              'Cancel order')),
+                                                      content: Container(
+                                                        height: 70,
+                                                        child: Column(
+                                                          children: <Widget>[
+                                                            Row(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: <
+                                                                  Widget>[
+                                                                Text('Comment'),
+                                                                SizedBox(
+                                                                  width: 10,
+                                                                ),
+                                                                Container(
+                                                                  width: 150,
+                                                                  child:
+                                                                      TextFormField(
+                                                                    keyboardType:
+                                                                        TextInputType
+                                                                            .multiline,
+                                                                    maxLines: 2,
+                                                                    controller:
+                                                                        cancelCommentController,
+                                                                    decoration: InputDecoration(
+                                                                        hintText:
+                                                                            'write a comment'),
+                                                                  ),
+                                                                )
+                                                              ],
+                                                            )
+                                                          ],
+                                                        ),
                                                       ),
-                                                    )
-                                                  ],
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                          actions: <Widget>[
-                                            FlatButton(
-                                              child: Text('Cancel'),
-                                              onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(false);
-                                              },
-                                            ),
-                                            FlatButton(
-                                              child: Text('Confirm'),
-                                              onPressed: () async{
-                                                await Provider.of<Orders>(context, listen: false).cancelOrder(finalOrders[i].id.toString(), cancelCommentController.text);
-                                                if (!mounted) return;
-                                                setState(() {
-                                                  _isInit = true;
-                                                  _isLoading = true;
+                                                      actions: <Widget>[
+                                                        FlatButton(
+                                                          child:
+                                                              Text('Confirm'),
+                                                          onPressed: () async {
+                                                            cancelCommentController.text = null;
+                                                            var response = await Provider.of<Orders>(context, listen: false).cancelOrder(finalOrders[i].id.toString(), cancelCommentController.text);
+                                                            if(response != null){
+                                                              Toast.show(response['msg'], context,duration: Toast.LENGTH_LONG,gravity: Toast.BOTTOM);
+                                                            }else{
+                                                              Toast.show('Something went wrong, please try again.', context,duration: Toast.LENGTH_LONG,gravity: Toast.BOTTOM);
 
-                                                });
-                                                Provider.of<Orders>(context, listen: false)
-                                                    .fetchAndSetOrders(filters,pageCount)
-                                                    .then((data) {
-                                                  setState(() {
-                                                    finalOrders = data;
-                                                    _isLoading = false;
-                                                  });
-                                                });
-                                                _isInit = false;
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(true);
-                                              },
-                                            ),
-                                          ],
-                                        ));
-                              },
+                                                            }
+                                                            if (!mounted)
+                                                              return;
+                                                            setState(() {
+                                                              _isInit = true;
+                                                              _isLoading = true;
+                                                            });
+                                                            Provider.of<Orders>(
+                                                                    context,
+                                                                    listen:
+                                                                        false)
+                                                                .fetchAndSetOrders(
+                                                                    filters,
+                                                                    [1, 4],
+                                                                    pageCount)
+                                                                .then((data) {
+                                                              setState(() {
+                                                                finalOrders =
+                                                                    data;
+                                                                _isLoading =
+                                                                    false;
+                                                              });
+                                                            });
+                                                            _isInit = false;
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop(true);
+                                                          },
+                                                        ),
+                                                        FlatButton(
+                                                          child: Text('Cancel'),
+                                                          onPressed: () {
+                                                            Navigator.of(
+                                                                context)
+                                                                .pop(false);
+                                                          },
+                                                        ),
+                                                      ],
+                                                    ));
+                                          },
+                                        )
+                                      : SizedBox(
+                                          width: 0.0,
+                                          height: 0.0,
+                                        ),
+                                  SizedBox(
+                                    width: 20.0,
+                                  ),
+                                  finalOrders[i].status == '1'
+                                      ? IconButton(
+                                          icon: Icon(Icons.edit),
+                                          onPressed: () async {
+                                            List<Map<String, dynamic>>
+                                                cartItemFromOrder;
+                                            await DBHelper.clearCart();
+                                            await Provider.of<Orders>(context,
+                                                    listen: false)
+                                                .fetchOrderForCart(
+                                                    finalOrders[i].id)
+                                                .then((data) {
+                                              setState(() {
+                                                cartItemFromOrder = data;
+                                              });
+                                              cartItemFromOrder
+                                                  .map((cartData) async {
+                                                await DBHelper
+                                                    .createCartFromOrder(
+                                                        CartItem.fromJson(
+                                                            cartData));
+                                              }).toList();
+                                            });
+                                            final cart = Provider.of<Cart>(
+                                                context,
+                                                listen: false);
+
+                                            setState(() {
+                                              cart.isUpdateMode = true;
+                                            });
+
+                                            await Provider.of<Cart>(context,
+                                                    listen: false)
+                                                .fetchAndSetCartItems1();
+
+                                            // Navigator.of(context).pushNamed(OrderUpdateScreen.routeName, arguments: finalOrders[i].id);
+                                            Navigator.of(context).pushNamed(
+                                                CartScreen.routeName,
+                                                arguments: finalOrders[i].id);
+                                          },
+                                        )
+                                      : SizedBox(
+                                          width: 0.0,
+                                          height: 0.0,
+                                        ),
+                                ],
+                              ),
                             ),
-                            finalOrders[i].status == '1' ?IconButton(
-                              icon: Icon(Icons.edit),
-                              onPressed: () async{
-                                List<Map<String,dynamic>> cartItemFromOrder;
-                                await DBHelper.clearCart();
-                                await Provider.of<Orders>(context,listen: false).fetchOrderForCart(finalOrders[i].id).then((data){
-                                  setState(() {
-                                    cartItemFromOrder = data;
-                                  });
-                                  cartItemFromOrder.map((cartData) async{
-                                    await DBHelper.createCartFromOrder(CartItem.fromJson(cartData));
-                                  }).toList();
-                                });
-                                final cart = Provider.of<Cart>(context,listen: false);
-
-                                setState(() {
-                                  cart.isUpdateMode = true;
-                                });
-
-                                await Provider.of<Cart>(context, listen: false).fetchAndSetCartItems1();
-
-                                // Navigator.of(context).pushNamed(OrderUpdateScreen.routeName, arguments: finalOrders[i].id);
-                                Navigator.of(context).pushNamed(CartScreen.routeName, arguments: finalOrders[i].id);
-                              },
-                            ):SizedBox(width: 0.0,height: 0.0,),
-                          ],
-                        ),
+                            onTap: () async {
+                              Navigator.of(context).pushNamed(
+                                  OrderDetailScreen.routeName,
+                                  arguments: finalOrders[i].id);
+                            },
+                          ),
+                        ],
                       ),
-                      onTap: () async {
-                        Navigator.of(context).pushNamed(
-                            OrderDetailScreen.routeName,
-                            arguments: finalOrders[i].id);
-                      },
-                    ),
-                  ],
-                ),
-              ):SizedBox(width: 0.0,height: 0.0,);
-            }
-          },
-        )
+                    );
+                    // :SizedBox(width: 0.0,height: 0.0,);
+                  }
+                },
+              )
             : Center(
-          child: Text('No pending order'),
-        ),
-
+                child: Text('No pending order'),
+              ),
       );
     if (isPerformingRequest)
       return Center(
@@ -500,6 +459,4 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
       child: Text('no order found'),
     );
   }
-
-
 }

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:sales_app/providers/cart.dart';
 import 'package:sales_app/providers/orders.dart';
 import 'package:sales_app/screens/order_list_screen.dart';
+import 'package:sales_app/screens/pending_order_list_screen.dart';
 import 'package:sales_app/screens/products_overview_screen.dart';
 
 
@@ -55,7 +56,7 @@ class _ConfirmInvoiceDialogState extends State<ConfirmInvoiceDialog>{
                     if(widget.invoiceStatus == null ) {
                       response = await Provider.of<Orders>(context, listen: false).createInvoice(widget.invoiceData);
                     }else{
-                      response = await Provider.of<Orders>(context, listen: false).createInvoiceWithPayment(widget.invoiceData);
+                      response = await Provider.of<Orders>(context, listen: false).createInvoiceForSales(widget.invoiceData);
                     }
                   }else{
                     response = await Provider.of<Orders>(context, listen: false).updateInvoice(widget.invoiceData,widget.invoiceId);
@@ -83,7 +84,7 @@ class _ConfirmInvoiceDialogState extends State<ConfirmInvoiceDialog>{
                       mainButton: FlatButton(
                         child: Text('view order'),
                         onPressed: () {
-                          Navigator.of(context).pushNamed(OrderListScreen.routeName);
+                          Navigator.of(context).pushNamed(PendingOrderListScreen.routeName);
                         },
                       ),
 

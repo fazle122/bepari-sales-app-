@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sales_app/providers/auth.dart';
 import 'package:sales_app/models/http_exception.dart';
+import 'package:sales_app/screens/pending_order_list_screen.dart';
 
 
 enum AuthMode { Signup, Login }
@@ -102,7 +103,7 @@ class _AuthCardState extends State<AuthCard> {
         // Log user in
         await Provider.of<Auth>(context, listen: false).login(
             _authData['email'], _authData['password']);
-        Navigator.of(context).pushNamed(OrderListScreen.routeName);
+        Navigator.of(context).pushNamed(PendingOrderListScreen.routeName);
 
       } else {
         // Sign user up

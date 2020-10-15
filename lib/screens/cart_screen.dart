@@ -11,6 +11,7 @@ import 'package:sales_app/providers/products.dart';
 import 'package:sales_app/screens/auth_screen.dart';
 import 'package:sales_app/screens/create_invoice_screen.dart';
 import 'package:sales_app/screens/order_list_screen.dart';
+import 'package:sales_app/screens/pending_order_list_screen.dart';
 import 'package:sales_app/screens/products_overview_screen.dart';
 import 'package:sales_app/widgets/app_drawer.dart';
 import 'package:sales_app/widgets/cart_item.dart';
@@ -116,7 +117,7 @@ class _CartScreenState extends BaseState<CartScreen> {
                                     // orders.deliveryCharge = null;
                                   });
                                   Navigator.pushReplacementNamed(
-                                      context, OrderListScreen.routeName);
+                                      context, PendingOrderListScreen.routeName);
                                 },
                               )
                             : SizedBox(

@@ -1,4 +1,5 @@
 
+import 'package:flushbar/flushbar.dart';
 import 'package:sales_app/base_state.dart';
 import 'package:sales_app/data_helper/local_db_helper.dart';
 import 'package:sales_app/providers/cart.dart';
@@ -12,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_app/widgets/order_fiter_dialog.dart';
+import 'package:toast/toast.dart';
 
 
 
@@ -58,7 +60,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
         });
         Provider.of<Cart>(context,listen: false).fetchAndSetCartItems1();
         Provider.of<Orders>(context, listen: false)
-            .fetchAndSetOrders(filters,pageCount)
+            .fetchAndSetOrders(filters,[0],pageCount)
             .then((data) {
           setState(() {
             finalOrders = data;
@@ -96,7 +98,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
         );
       }
       Provider.of<Orders>(context, listen: false)
-          .fetchAndSetOrders(filters,pageCount)
+          .fetchAndSetOrders(filters,[0],pageCount)
           .then((data) {
         isPerformingRequest = false;
         if (data == null || data.isEmpty) {
@@ -139,7 +141,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
       setState(() {
         _isLoading = true;
       });
-      Provider.of<Orders>(context,listen: false).fetchAndSetOrders(filters,1).then((_){
+      Provider.of<Orders>(context,listen: false).fetchAndSetOrders(filters,[0],1).then((_){
         if (!mounted) return;
         setState(() {
           _isLoading = false;
@@ -256,6 +258,25 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
 
     );
   }
+  Widget _showFlushbar(BuildContext context,String msg) {
+    Flushbar(
+      duration: Duration(seconds: 3),
+      margin: EdgeInsets.only(bottom: 50),
+      padding: EdgeInsets.all(10),
+      borderRadius: 8,
+      backgroundColor: Colors.green.shade400,
+      boxShadows: [
+        BoxShadow(
+          color: Colors.black45,
+          offset: Offset(3, 3),
+          blurRadius: 3,
+        ),
+      ],
+      dismissDirection: FlushbarDismissDirection.HORIZONTAL,
+      forwardAnimationCurve: Curves.fastLinearToSlowEaseIn,
+      title: msg,
+    )..show(context);
+  }
 
   Widget queryItemListDataWidget(BuildContext context) {
     if (finalOrders.isNotEmpty) //has data & performing/not performing
@@ -286,98 +307,10 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
                       subtitle: Text('Total amount: ' +
                           '\$${finalOrders[i].invoiceAmount}'),
                       trailing: Container(
-                        width: 150,
+                        width: 120,
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
-                            finalOrders[i].status == null ? SizedBox(width: 0.0,height: 0.0,):
-                            IconButton(
-                              icon: Icon(Icons.done),
-                              onPressed: () async {
-                                showDialog(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder: (context) =>
-                                        AlertDialog(
-                                          title: Center(child:Text(
-                                              'Confirm order')),
-                                          content:
-                                          Container(
-                                            height: 150,
-                                            child: Column(
-                                              children: <Widget>[
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: <Widget>[
-                                                    Text('Amount'),
-                                                    SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.number,
-                                                        controller: amountController,
-                                                        decoration: InputDecoration(hintText: 'enter order amount'),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: <Widget>[
-                                                    Text('Comment'),
-                                                    SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.multiline,
-                                                        maxLines: 2,
-                                                        controller: deliveryCommentController,
-                                                        decoration: InputDecoration(hintText: 'write a comment'),
-                                                      ),
-                                                    )
-                                                  ],
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                          actions: <Widget>[
-                                            FlatButton(
-                                              child: Text('Continue'),
-                                              onPressed: () async{
-                                                await Provider.of<Orders>(context, listen: false).deliverOrder(finalOrders[i].id.toString(), deliveryCommentController.text,double.parse(amountController.text),null);
-                                                if (!mounted) return;
-                                                setState(() {
-                                                  _isInit = true;
-                                                  _isLoading = true;
-
-                                                });
-                                                Provider.of<Orders>(context, listen: false)
-                                                    .fetchAndSetOrders(filters,pageCount)
-                                                    .then((data) {
-                                                  setState(() {
-                                                    finalOrders = data;
-                                                    _isLoading = false;
-                                                  });
-                                                });
-                                                _isInit = false;
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(true);
-                                              },
-                                            ),
-                                            FlatButton(
-                                              child: Text('Cancel'),
-                                              onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(true);
-                                              },
-                                            ),
-                                          ],
-                                        ));
-                              },
-                            ),
-                            finalOrders[i].status == null ?SizedBox(width: 0.0,height: 0.0,):
                             IconButton(
                               icon: Icon(Icons.cancel),
                               onPressed: () async {
@@ -411,27 +344,25 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
                                             ),
                                           ),
                                           actions: <Widget>[
-                                            FlatButton(
-                                              child: Text('Cancel'),
-                                              onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(false);
-                                              },
-                                            ),
+
                                             FlatButton(
                                               child: Text('Confirm'),
                                               onPressed: () async{
-                                                await Provider.of<Orders>(context, listen: false).cancelOrder(finalOrders[i].id.toString(), cancelCommentController.text);
+                                                cancelCommentController.text = null;
+                                                var response = await Provider.of<Orders>(context, listen: false).cancelOrder(finalOrders[i].id.toString(), cancelCommentController.text);
+                                                if(response != null){
+                                                  Toast.show(response['msg'], context,duration: Toast.LENGTH_LONG,gravity: Toast.BOTTOM);
+                                                }else{
+                                                  Toast.show('Something went wrong, please try again.', context,duration: Toast.LENGTH_LONG,gravity: Toast.BOTTOM);
+
+                                                }
                                                 if (!mounted) return;
                                                 setState(() {
                                                   _isInit = true;
                                                   _isLoading = true;
 
                                                 });
-                                                Provider.of<Orders>(context, listen: false)
-                                                    .fetchAndSetOrders(filters,pageCount)
-                                                    .then((data) {
+                                                Provider.of<Orders>(context, listen: false).fetchAndSetOrders(filters,[0],pageCount).then((data) {
                                                   setState(() {
                                                     finalOrders = data;
                                                     _isLoading = false;
@@ -443,10 +374,19 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
                                                     .pop(true);
                                               },
                                             ),
+                                            FlatButton(
+                                              child: Text('Cancel'),
+                                              onPressed: () {
+                                                Navigator.of(
+                                                    context)
+                                                    .pop(false);
+                                              },
+                                            ),
                                           ],
                                         ));
                               },
                             ),
+                            SizedBox(width: 20.0,),
                             IconButton(
                               icon: Icon(Icons.edit),
                               onPressed: () async{
@@ -468,7 +408,6 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
 
                                 await Provider.of<Cart>(context, listen: false).fetchAndSetCartItems1();
 
-                                // Navigator.of(context).pushNamed(OrderUpdateScreen.routeName, arguments: finalOrders[i].id);
                                 Navigator.of(context).pushNamed(CartScreen.routeName, arguments: finalOrders[i].id);
                               },
                             ),

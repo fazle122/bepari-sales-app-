@@ -1,9 +1,15 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:sales_app/data_helper/local_db_helper.dart';
 import 'package:sales_app/providers/orders.dart';
+import 'package:sales_app/screens/due_orders_screen.dart';
 import 'package:sales_app/screens/order_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:toast/toast.dart';
+
+import 'pending_order_list_screen.dart';
 
 
 class OrderDetailScreen extends StatefulWidget {
@@ -21,6 +27,10 @@ class OrderDetailScreen extends StatefulWidget {
   TextEditingController dueAmountController;
   TextEditingController paidAmountController;
   TextEditingController receiveAmountController;
+  TextEditingController amountController;
+
+  double _receiptAmount = 0.0;
+  final _form = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -31,6 +41,8 @@ class OrderDetailScreen extends StatefulWidget {
     dueAmountController = TextEditingController();
     paidAmountController = TextEditingController();
     receiveAmountController = TextEditingController();
+    amountController = TextEditingController();
+    // amountController.text = _receiptAmount.toString();
     super.initState();
   }
 
@@ -54,6 +66,99 @@ class OrderDetailScreen extends StatefulWidget {
     }
     finalTime = finalTime + Meridien;
     return finalTime;
+  }
+
+
+  Widget _soldWithDue(var orderId,var data){
+    return AlertDialog(
+      title: Center(child:Text('Confirm order')),
+      content:
+      Container(
+        height: 100,
+        child: Column(
+          children: <Widget>[
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text('Invoice amount : '),
+                SizedBox(width: 10,),
+                Text(data.invoiceAmount.toString())
+              ],
+            ),
+            SizedBox(height: 20,),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text('Current payment'),
+                SizedBox(width: 10,),
+                Container(
+                  width: 130,
+                  child: TextField(
+                    keyboardType: TextInputType.number,
+                    controller: amountController,
+                    onChanged: (text) => {},
+                    decoration: InputDecoration(prefixIcon: Icon(Icons.attach_money),hintText: '0.0'),
+                  ),
+                )
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        FlatButton(
+          child: Text('Pay later'),
+          onPressed: () async{
+            var response = await Provider.of<Orders>(context, listen: false).confirmOrder(orderId.toString());
+            if(response != null){
+              Toast.show(response['msg'], context,duration: Toast.LENGTH_LONG,gravity: Toast.BOTTOM);
+            }else{
+              Toast.show('Something went wrong, please try again', context,duration: Toast.LENGTH_LONG,gravity: Toast.BOTTOM);
+            }
+            Navigator.of(context).pop(true);
+            Navigator.of(context).pushReplacementNamed(DueOrderListScreen.routeName);
+          },
+        ),
+        FlatButton(
+          child: Text('Sold with due'),
+          onPressed: () async{
+            Map<String,dynamic> data = Map();
+            data.putIfAbsent('receipt_date', () => DateTime.now());
+            data.putIfAbsent('invoice_status', () => 4);
+            data.putIfAbsent('receipt_amount', () => amountController.text);
+            data.putIfAbsent('comment', () => '');
+            
+            FormData formdata = FormData.fromMap(data);
+            var response;
+            if(amountController.text == '' || amountController.text == null) {
+              Toast.show('Please enter amount', context, duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+            }else{
+              print(amountController.text);
+
+              response = await Provider.of<Orders>(context, listen: false).payOrderWithDue(orderId.toString(),formdata);
+              amountController.text = null;
+              if(response != null){
+                Toast.show(response['msg'], context, duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacementNamed(DueOrderListScreen.routeName);
+              }else{
+                Toast.show('Something went wrong, please try again', context, duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacementNamed(PendingOrderListScreen.routeName);
+              }
+            }
+
+
+          },
+        ),
+        FlatButton(
+          child: Text('Cancel'),
+          onPressed: () {
+            Navigator.of(context).pop(true);
+          },
+        ),
+      ],
+    );
   }
 
   @override
@@ -163,44 +268,45 @@ class OrderDetailScreen extends StatefulWidget {
                                         AlertDialog(
                                           title: Center(child: Text('Order confirmation')),
                                           content: Container(
-                                            height: 70,
+                                            height: 40,
                                             child: Column(
                                               children: <Widget>[
                                                 Row(
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: <Widget>[
-                                                    Text('Comment'),
+                                                    Text('Invoice amount : '),
                                                     SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.multiline,
-                                                        maxLines: 2,
-                                                        controller: cancelCommentController,
-                                                        decoration: InputDecoration(hintText: 'write a comment'),
-                                                      ),
-                                                    )
+                                                    Text(orderDetailData.singOrderItem.invoiceAmount.toString())
                                                   ],
-                                                )
+                                                ),
                                               ],
                                             ),
                                           ),
                                           actions: <Widget>[
-                                            FlatButton(
-                                              child: Text('Cancel'),
-                                              onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(false);
-                                              },
-                                            ),
+
                                             FlatButton(
                                               child: Text('Paid & Finished'),
                                               onPressed: () async{
-                                                await Provider.of<Orders>(context, listen: false).payOrder(orderId.toString());
-                                                Navigator.pushReplacement(context, MaterialPageRoute(
-                                                    builder: (context) => OrderListScreen()
-                                                ));
+                                                var response = await Provider.of<Orders>(context, listen: false).payOrder(orderId.toString());
+                                                if(response != null){
+                                                  Toast.show(response['msg'], context,
+                                                      duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                                                }else{
+                                                  Toast.show('something went wrong, please try again', context,
+                                                      duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                                                }
+                                                if(orderDetailData.singOrderItem.status == '1' || orderDetailData.singOrderItem.status == '4'){
+                                                  Navigator.of(context).pushReplacementNamed(DueOrderListScreen.routeName);
+                                                }else{
+                                                  Navigator.of(context).pushReplacementNamed(PendingOrderListScreen.routeName);
+                                                }
+
+                                              },
+                                            ),
+                                            FlatButton(
+                                              child: Text('Cancel'),
+                                              onPressed: () {
+                                                Navigator.of(context).pop(false);
                                               },
                                             ),
                                           ],
@@ -211,7 +317,7 @@ class OrderDetailScreen extends StatefulWidget {
                             ),
                           ):SizedBox(width: 0.0,height: 0.0,),
                           SizedBox(width: 20.0,),
-                          orderDetailData.singOrderItem.status != '4' ?
+                          orderDetailData.singOrderItem.status == '4' || orderDetailData.singOrderItem.status == '1' ?SizedBox(width: 0.0,height: 0.0,):
                           Container(
                             height: 40.0,
                             width: 140.0,
@@ -226,90 +332,12 @@ class OrderDetailScreen extends StatefulWidget {
                                 showDialog(
                                     context: context,
                                     barrierDismissible: false,
-                                    builder: (context) =>
-                                        AlertDialog(
-                                          title: Center(child:Text(
-                                              'Sold with due')),
-                                          content:
-                                          Container(
-                                            height: 150,
-                                            child: Column(
-                                              children: <Widget>[
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: <Widget>[
-                                                    Text('Amount'),
-                                                    SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.number,
-                                                        controller: paidAmountController,
-                                                        decoration: InputDecoration(hintText: 'enter order amount'),
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                                Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: <Widget>[
-                                                    Text('Comment'),
-                                                    SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.multiline,
-                                                        maxLines: 2,
-                                                        controller: deliveryCommentController,
-                                                        decoration: InputDecoration(hintText: 'write a comment'),
-                                                      ),
-                                                    )
-                                                  ],
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                          actions: <Widget>[
-                                            FlatButton(
-                                              child: Text('Paid'),
-                                              onPressed: () async{
-                                                await Provider.of<Orders>(context, listen: false).deliverOrder(orderId.toString(), deliveryCommentController.text,double.parse(paidAmountController.text),null);
-                                                Navigator.pushReplacement(context, MaterialPageRoute(
-                                                  builder: (context) => OrderListScreen()
-                                                ));
-                                                },
-                                            ),
-                                            FlatButton(
-                                              child: Text('Finished'),
-                                              onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(true);
-                                              },
-                                            ),
-                                            FlatButton(
-                                              child: Text('Save'),
-                                              onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(true);
-                                              },
-                                            ),
-                                            FlatButton(
-                                              child: Text('Pay later'),
-                                              onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(true);
-                                              },
-                                            ),
-                                          ],
-                                        ));
+                                    builder: (context) =>_soldWithDue(orderId.toString(),orderDetailData.singOrderItem));
                               },
                               color: Theme.of(context).primaryColor,
                               textColor: Colors.white,
                             ),
-                          ):SizedBox(width: 0.0,height: 0.0,),
+                          ),
                         ],
                       ),
                     ),
@@ -318,7 +346,7 @@ class OrderDetailScreen extends StatefulWidget {
                       child: Row(
                         mainAxisAlignment: orderDetailData.singOrderItem.status == null? MainAxisAlignment.spaceEvenly:MainAxisAlignment.center,
                         children: <Widget>[
-                          // orderDetailData.singOrderItem.status != '0'?SizedBox(width: 0.0,height: 0.0,):
+                          orderDetailData.singOrderItem.status == '0'?SizedBox(width: 0.0,height: 0.0,):
                           Container(
                             height: 40.0,
                             width: 140.0,
@@ -344,33 +372,21 @@ class OrderDetailScreen extends StatefulWidget {
                                                 Row(
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: <Widget>[
-                                                    Text('Due amount'),
+                                                    Text('Invoice amount : '),
                                                     SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.number,
-                                                        controller: dueAmountController,
-                                                        decoration: InputDecoration(hintText: 'enter due amount'),
-                                                      ),
-                                                    )
+                                                    Text(orderDetailData.singOrderItem.invoiceAmount.toString())
                                                   ],
                                                 ),
+                                                SizedBox(height: 20.0,),
                                                 Row(
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: <Widget>[
-                                                    Text('Paid amount'),
+                                                    Text('Due amount : '),
                                                     SizedBox(width: 10,),
-                                                    Container(
-                                                      width: 150,
-                                                      child: TextFormField(
-                                                        keyboardType: TextInputType.number,
-                                                        controller: paidAmountController,
-                                                        decoration: InputDecoration(hintText: 'enter paid amount'),
-                                                      ),
-                                                    )
+                                                    Text(orderDetailData.singOrderItem.totalDue.toString())
                                                   ],
                                                 ),
+                                                SizedBox(height: 20.0,),
                                                 Row(
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: <Widget>[
@@ -381,7 +397,7 @@ class OrderDetailScreen extends StatefulWidget {
                                                       child: TextFormField(
                                                         keyboardType: TextInputType.number,
                                                         controller: receiveAmountController,
-                                                        decoration: InputDecoration(hintText: 'enter receive amount'),
+                                                        decoration: InputDecoration(hintText: 'received amount'),
                                                       ),
                                                     )
                                                   ],
@@ -391,20 +407,35 @@ class OrderDetailScreen extends StatefulWidget {
                                           ),
                                           actions: <Widget>[
                                             FlatButton(
-                                              child: Text('Continue'),
+                                              child: Text('Confirm'),
                                               onPressed: () async{
-                                                await Provider.of<Orders>(context, listen: false).deliverOrder(orderId.toString(), deliveryCommentController.text,double.parse(receiveAmountController.text),null);
-                                                Navigator.pushReplacement(context, MaterialPageRoute(
-                                                    builder: (context) => OrderListScreen()
-                                                ));
+                                                Map<String,dynamic> data = Map();
+                                                // data.putIfAbsent('id', () => orderId.toString());
+                                                data.putIfAbsent('accounts_group_id[0]', () => 16);
+                                                data.putIfAbsent('amount[0]', () => receiveAmountController.text);
+                                                data.putIfAbsent('receipt_amount', () => receiveAmountController.text);
+                                                data.putIfAbsent('receipt_date', () => DateTime.now());
+                                                data.putIfAbsent('comment', () => null);
+                                                FormData formData = FormData.fromMap(data);
+                                                var response = await Provider.of<Orders>(context, listen: false).receivePartialPayment(orderId.toString(),formData);
+                                                if(response != null){
+                                                  Toast.show(response['msg'], context,
+                                                      duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                                                }else{
+                                                  Toast.show('something went wrong, please try again', context,
+                                                      duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                                                }
+                                                if(orderDetailData.singOrderItem.status == '1' || orderDetailData.singOrderItem.status == '4'){
+                                                  Navigator.of(context).pushReplacementNamed(DueOrderListScreen.routeName);
+                                                }else{
+                                                  Navigator.of(context).pushReplacementNamed(PendingOrderListScreen.routeName);
+                                                }
                                               },
                                             ),
                                             FlatButton(
                                               child: Text('Cancel'),
                                               onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(true);
+                                                Navigator.of(context).pop(true);
                                               },
                                             ),
                                           ],
@@ -415,11 +446,15 @@ class OrderDetailScreen extends StatefulWidget {
                             ),
                           ),
                           SizedBox(width: 20.0,),
-                          // orderDetailData.singOrderItem.status != '0'?SizedBox(width: 0.0,height: 0.0,):
+                          orderDetailData.singOrderItem.status == '4' ? SizedBox(width: 0.0,height: 0.0,):
                           Container(
                             height: 40.0,
                             width: 140.0,
                             child: RaisedButton(
+                              color: Theme.of(context).primaryColor,
+                              textColor: Colors.white,
+                              child: Text("Cancel".toUpperCase(),
+                                  style: TextStyle(fontSize: 14)),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(25.0),
                                   side: BorderSide(color: Colors.grey)),
@@ -454,30 +489,34 @@ class OrderDetailScreen extends StatefulWidget {
                                             ),
                                           ),
                                           actions: <Widget>[
-                                            FlatButton(
-                                              child: Text('Cancel'),
-                                              onPressed: () {
-                                                Navigator.of(
-                                                    context)
-                                                    .pop(false);
-                                              },
-                                            ),
+
                                             FlatButton(
                                               child: Text('Confirm'),
                                               onPressed: () async{
-                                                await Provider.of<Orders>(context, listen: false).cancelOrder(orderId.toString(), cancelCommentController.text);
-                                                Navigator.pushReplacement(context, MaterialPageRoute(
-                                                    builder: (context) => OrderListScreen()
-                                                ));
+                                                cancelCommentController.text = null;
+                                                var response = await Provider.of<Orders>(context, listen: false).cancelOrder(orderId.toString(), cancelCommentController.text);
+                                                if(response != null){
+                                                  Toast.show(response['msg'], context,duration: Toast.LENGTH_LONG,gravity: Toast.BOTTOM);
+                                                }else{
+                                                  Toast.show('Something went wrong, please try again.', context,duration: Toast.LENGTH_LONG,gravity: Toast.BOTTOM);
+                                                }
+                                                if(orderDetailData.singOrderItem.status == '1' || orderDetailData.singOrderItem.status == '4'){
+                                                  Navigator.of(context).pushReplacementNamed(DueOrderListScreen.routeName);
+                                                }else{
+                                                  Navigator.of(context).pushReplacementNamed(PendingOrderListScreen.routeName);
+                                                }
+                                              },
+                                            ),
+                                            FlatButton(
+                                              child: Text('Cancel'),
+                                              onPressed: () {
+                                                Navigator.of(context).pop(false);
                                               },
                                             ),
                                           ],
                                         ));
                               },
-                              color: Theme.of(context).primaryColor,
-                              textColor: Colors.white,
-                              child: Text("Cancel".toUpperCase(),
-                                  style: TextStyle(fontSize: 14)),
+
                             ),
                           ),
                         ],
