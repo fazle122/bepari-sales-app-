@@ -199,37 +199,37 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
                 Navigator.pushNamed(context, ProductsOverviewScreen.routeName);
               },
             ),
-            PopupMenuButton<String>(
-              onSelected: (val) async {
-                switch (val) {
-//                  case 'COMPLETED_ORDERS':
-//                    Navigator.of(context).pushNamed(CompletedOrdersScreen.routeName);
-//                    break;
-                  case 'FILTER':
-                    var newFilter = await _orderFilterDialog();
-                    if (newFilter != null) {
-                      setState(() {
-                        pageCount = 1;
-                        finalOrders = [];
-                        filters = newFilter;
-                        _isInit = true;
-                      });
-                    }
-                    getOrderData(filters, 1);
-                    break;
-                }
-              },
-              itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
-//                PopupMenuItem<String>(
-//                  value: 'COMPLETED_ORDERS',
-//                  child: Text('Completed orders'),
-//                ),
-                PopupMenuItem<String>(
-                  value: 'FILTER',
-                  child: Text('Filter'),
-                )
-              ],
-            ),
+//             PopupMenuButton<String>(
+//               onSelected: (val) async {
+//                 switch (val) {
+// //                  case 'COMPLETED_ORDERS':
+// //                    Navigator.of(context).pushNamed(CompletedOrdersScreen.routeName);
+// //                    break;
+//                   case 'FILTER':
+//                     var newFilter = await _orderFilterDialog();
+//                     if (newFilter != null) {
+//                       setState(() {
+//                         pageCount = 1;
+//                         finalOrders = [];
+//                         filters = newFilter;
+//                         _isInit = true;
+//                       });
+//                     }
+//                     getOrderData(filters, 1);
+//                     break;
+//                 }
+//               },
+//               itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
+// //                PopupMenuItem<String>(
+// //                  value: 'COMPLETED_ORDERS',
+// //                  child: Text('Completed orders'),
+// //                ),
+//                 PopupMenuItem<String>(
+//                   value: 'FILTER',
+//                   child: Text('Filter'),
+//                 )
+//               ],
+//             ),
           ],
         ),
         drawer: AppDrawer(),

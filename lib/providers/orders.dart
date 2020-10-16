@@ -185,7 +185,8 @@ class Orders with ChangeNotifier {
         return null;
       }
     }catch(error){
-      throw error;
+      // throw error;
+      return null;
     }
   }
 
@@ -394,6 +395,74 @@ class Orders with ChangeNotifier {
 //      if (filters.containsKey('invoice_to_date') && filters['invoice_to_date'] != 'null') {
 //        url += '&invoice_to_date=' + filters['invoice_to_date'].toString();
 //      }
+//      if (currentPage != null) {
+//        qString += '&page=$currentPage';
+//      }
+    }
+
+    Dio dioService = new Dio();
+    dioService.options.headers = {
+      'Authorization': 'Bearer ' + authToken,
+      'Content-Type': 'application/json',
+    };
+    try {
+      final Response response = await dioService.get(
+        url,
+      );
+      final List<OrderItem> loadedOrders = [];
+      final extractedData = response.data;
+      if (extractedData == null) {
+        return null;
+      }
+
+      if (extractedData['data'].length > 0) {
+        var allOrders = extractedData['data']['data'];
+        for (int i = 0; i < allOrders.length; i++) {
+          final OrderItem orders = OrderItem(
+            id: allOrders[i]['id'],
+            invoiceAmount: allOrders[i]['invoice_amount'],
+            totalDue: allOrders[i]['total_due'],
+            dateTime: DateTime.parse(allOrders[i]['invoice_date']),
+            status: allOrders[i]['status'].toString(),
+          );
+          loadedOrders.add(orders);
+        }
+        lastPageCount = extractedData['data']['last_page'];
+        _orders = loadedOrders;
+      } else {
+        _orders = [];
+      }
+      notifyListeners();
+      return _orders;
+    } catch (error) {
+      throw (error);
+    }
+  }
+
+  Future<List<OrderItem>> fetchAndSetOrdersTest(
+      Map<String, dynamic> filters, int pageCount) async {
+
+    // for(int i=0; i<statusArray.length;i++){
+    //   url += '&status_array[$i]=' + statusArray[i].toString();
+    //
+    // }
+    // String url = 'http://new.bepari.net/demo/api/V1.1/accounts/invoice/list?status_array=$statusArray&page_size=10&page=$pageCount';
+
+    String url = 'http://new.bepari.net/demo/api/V1.1/accounts/invoice/list?page_size=10&page=$pageCount';
+    if (filters != null) {
+      if (filters.containsKey('status_array') && filters['status_array'] != null) {
+        // url += '&status=' + filters['status'].toString();
+        for(int i=0; i<filters['status_array'].length;i++){
+          url += '&status_array[$i]=' + filters['status_array'][i].toString();
+
+        }
+      }
+     if (filters.containsKey('invoice_from_date') && filters['invoice_from_date'] != null) {
+       url += 'invoice_from_date=' + filters['invoice_from_date'].toString();
+     }
+     if (filters.containsKey('invoice_to_date') && filters['invoice_to_date'] != null) {
+       url += '&invoice_to_date=' + filters['invoice_to_date'].toString();
+     }
 //      if (currentPage != null) {
 //        qString += '&page=$currentPage';
 //      }

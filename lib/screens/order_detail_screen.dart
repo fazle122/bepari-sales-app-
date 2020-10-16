@@ -127,11 +127,11 @@ class OrderDetailScreen extends StatefulWidget {
             data.putIfAbsent('invoice_status', () => 4);
             data.putIfAbsent('receipt_amount', () => amountController.text);
             data.putIfAbsent('comment', () => '');
-            
+
             FormData formdata = FormData.fromMap(data);
             var response;
             if(amountController.text == '' || amountController.text == null) {
-              Toast.show('Please enter amount', context, duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+              Toast.show('Please enter amount', context, duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
             }else{
               print(amountController.text);
 
@@ -230,21 +230,9 @@ class OrderDetailScreen extends StatefulWidget {
                                   ],
                                 ),
                               )
-//                               ListTile(
-//                             title: Text('Item name:' + orderDetailData.singOrderItem.invoiceItem[i].productName),
-//                             subtitle: ListTile(
-//                               title: Text('Quantity:'  + orderDetailData.singOrderItem.invoiceItem[i].quantity.toString()),
-// //                              subtitle: Text(
-// //                                  'price:' + orderDetailData.singOrderItem.invoiceItem[i].quantity.toString() + 'x'
-// //                                      + orderDetailData.singOrderItem.invoiceItem[i].unitPrice.toString()  + ' = '
-// //                                      + (orderDetailData.singOrderItem.invoiceItem[i].quantity * orderDetailData.singOrderItem.invoiceItem[i].unitPrice).toString()
-// //                                      + ' BDT'
-// //
-// //                              ),
-//                             ),
-//                           ),
                         )
                     ),
+                    orderDetailData.singOrderItem.status == '5' ? SizedBox(width: 0.0,height: 0.0,):
                     Container(
                       height: 60,
                       child: Row(
@@ -268,7 +256,7 @@ class OrderDetailScreen extends StatefulWidget {
                                         AlertDialog(
                                           title: Center(child: Text('Order confirmation')),
                                           content: Container(
-                                            height: 40,
+                                            height: 70,
                                             child: Column(
                                               children: <Widget>[
                                                 Row(
@@ -277,6 +265,13 @@ class OrderDetailScreen extends StatefulWidget {
                                                     Text('Invoice amount : '),
                                                     SizedBox(width: 10,),
                                                     Text(orderDetailData.singOrderItem.invoiceAmount.toString())
+                                                  ],
+                                                ),
+                                                SizedBox(height: 10,),
+                                                Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: <Widget>[
+                                                    Flexible(child:Text('Are you sure, you want to sold this order with full payment?'),)
                                                   ],
                                                 ),
                                               ],
@@ -341,6 +336,7 @@ class OrderDetailScreen extends StatefulWidget {
                         ],
                       ),
                     ),
+                    orderDetailData.singOrderItem.status == '5' ? SizedBox(width: 0.0,height: 0.0,):
                     Container(
                       height: 60,
                       child: Row(
@@ -366,7 +362,7 @@ class OrderDetailScreen extends StatefulWidget {
                                           title: Center(child:Text('Receive payment')),
                                           content:
                                           Container(
-                                            height: 150,
+                                            height: 130,
                                             child: Column(
                                               children: <Widget>[
                                                 Row(
@@ -390,14 +386,14 @@ class OrderDetailScreen extends StatefulWidget {
                                                 Row(
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: <Widget>[
-                                                    Text('Receive amount'),
+                                                    Text('Received amount'),
                                                     SizedBox(width: 10,),
                                                     Container(
-                                                      width: 150,
+                                                      width: 120,
                                                       child: TextFormField(
                                                         keyboardType: TextInputType.number,
                                                         controller: receiveAmountController,
-                                                        decoration: InputDecoration(hintText: 'received amount'),
+                                                        decoration: InputDecoration(hintText: '0.0',prefixIcon: Icon(Icons.attach_money)),
                                                       ),
                                                     )
                                                   ],
@@ -409,6 +405,9 @@ class OrderDetailScreen extends StatefulWidget {
                                             FlatButton(
                                               child: Text('Confirm'),
                                               onPressed: () async{
+                                                if(receiveAmountController.text == '' || receiveAmountController.text == null){
+                                                  Toast.show('Please enter received amount', context,duration: Toast.LENGTH_LONG,gravity: Toast.CENTER);
+                                                }else{
                                                 Map<String,dynamic> data = Map();
                                                 // data.putIfAbsent('id', () => orderId.toString());
                                                 data.putIfAbsent('accounts_group_id[0]', () => 16);
@@ -418,6 +417,7 @@ class OrderDetailScreen extends StatefulWidget {
                                                 data.putIfAbsent('comment', () => null);
                                                 FormData formData = FormData.fromMap(data);
                                                 var response = await Provider.of<Orders>(context, listen: false).receivePartialPayment(orderId.toString(),formData);
+                                                receiveAmountController.text = '';
                                                 if(response != null){
                                                   Toast.show(response['msg'], context,
                                                       duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
@@ -429,6 +429,7 @@ class OrderDetailScreen extends StatefulWidget {
                                                   Navigator.of(context).pushReplacementNamed(DueOrderListScreen.routeName);
                                                 }else{
                                                   Navigator.of(context).pushReplacementNamed(PendingOrderListScreen.routeName);
+                                                }
                                                 }
                                               },
                                             ),
@@ -493,8 +494,12 @@ class OrderDetailScreen extends StatefulWidget {
                                             FlatButton(
                                               child: Text('Confirm'),
                                               onPressed: () async{
-                                                cancelCommentController.text = null;
+                                                if(cancelCommentController.text == '' || cancelCommentController.text == null){
+                                                  Toast.show('Please write your comment', context,duration: Toast.LENGTH_LONG,gravity: Toast.CENTER);
+                                                }else{
                                                 var response = await Provider.of<Orders>(context, listen: false).cancelOrder(orderId.toString(), cancelCommentController.text);
+                                                cancelCommentController.text = null;
+
                                                 if(response != null){
                                                   Toast.show(response['msg'], context,duration: Toast.LENGTH_LONG,gravity: Toast.BOTTOM);
                                                 }else{
@@ -504,6 +509,7 @@ class OrderDetailScreen extends StatefulWidget {
                                                   Navigator.of(context).pushReplacementNamed(DueOrderListScreen.routeName);
                                                 }else{
                                                   Navigator.of(context).pushReplacementNamed(PendingOrderListScreen.routeName);
+                                                }
                                                 }
                                               },
                                             ),

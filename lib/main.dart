@@ -13,6 +13,7 @@ import 'package:sales_app/screens/order_detail_screen.dart';
 import 'package:sales_app/screens/order_list_screen.dart';
 import 'package:sales_app/screens/order_update_screen.dart';
 import 'package:sales_app/screens/pending_order_list_screen.dart';
+import 'package:sales_app/screens/product_detail_screen.dart';
 import 'package:sales_app/screens/products_overview_screen.dart';
 import 'package:sales_app/screens/create_invoice_screen.dart';
 import 'package:sales_app/screens/splash_screen.dart';
@@ -72,6 +73,7 @@ class MyApp extends StatelessWidget {
             routes: {
               AuthScreen.routeName: (context) => AuthScreen(),
               ProductsOverviewScreen.routeName: (context) => ProductsOverviewScreen(),
+              ProductDetailScreen.routeName: (context) => ProductDetailScreen(),
               // OrderListScreen.routeName: (context) => OrderListScreen(),
               PendingOrderListScreen.routeName: (context) => PendingOrderListScreen(),
               DueOrderListScreen.routeName: (context) => DueOrderListScreen(),

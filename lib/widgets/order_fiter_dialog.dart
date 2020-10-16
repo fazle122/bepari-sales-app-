@@ -24,7 +24,8 @@ class _OrderFilterDialogState extends BaseState<OrderFilterDialog> {
   Map<String,dynamic> _defaultFilters = Map();
 
   static const Map<String, dynamic> status = {
-    "Full Due": 0,
+    "Pending": 0,
+    "Full Due":1,
     "Partial Paid":4,
     "Full Paid": 5,
   };
@@ -258,7 +259,8 @@ class _OrderFilterDialogState extends BaseState<OrderFilterDialog> {
                         Map<String, dynamic> filters = Map();
                         filters['invoice_from_date'] = _from;
                         filters['invoice_to_date'] = _to;
-                        filters['status'] = _currentStatus;
+                        // filters['status'] = _currentStatus;
+                        filters['status_array'] = [_currentStatus];
                         Navigator.of(context).pop(filters);
                       },
                     ),

@@ -41,12 +41,14 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
   TextEditingController cancelCommentController;
   TextEditingController deliveryCommentController;
   TextEditingController amountController;
+  var pageTitle = 'Pending';
 
   @override
   void initState() {
     cancelCommentController = TextEditingController();
     deliveryCommentController = TextEditingController();
     amountController = TextEditingController();
+    filters['status_array'] = [0];
     super.initState();
   }
 
@@ -60,7 +62,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
         });
         Provider.of<Cart>(context,listen: false).fetchAndSetCartItems1();
         Provider.of<Orders>(context, listen: false)
-            .fetchAndSetOrders(filters,[0],pageCount)
+            .fetchAndSetOrdersTest(filters,pageCount)
             .then((data) {
           setState(() {
             finalOrders = data;
@@ -98,7 +100,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
         );
       }
       Provider.of<Orders>(context, listen: false)
-          .fetchAndSetOrders(filters,[0],pageCount)
+          .fetchAndSetOrdersTest(filters,pageCount)
           .then((data) {
         isPerformingRequest = false;
         if (data == null || data.isEmpty) {
@@ -141,7 +143,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
       setState(() {
         _isLoading = true;
       });
-      Provider.of<Orders>(context,listen: false).fetchAndSetOrders(filters,[0],1).then((_){
+      Provider.of<Orders>(context,listen: false).fetchAndSetOrdersTest(filters,1).then((_){
         if (!mounted) return;
         setState(() {
           _isLoading = false;
@@ -192,6 +194,32 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
     );
   }
 
+  setPageTitle(Map<String,dynamic> data){
+    if(data.containsKey('status_array') && data['status_array'] != null){
+      if(data['status_array'][0] == 0){
+        setState(() {
+          pageTitle = "Pending";
+        });
+      }
+      if(data['status_array'][0] == 1){
+        setState(() {
+          pageTitle = "Full due";
+        });
+      }
+      if(data['status_array'][0] == 4){
+        setState(() {
+          pageTitle = "Partial paid";
+        });
+      }
+      if(data['status_array'][0] == 5){
+        setState(() {
+          pageTitle = "Full paid";
+        });
+      }
+    }
+
+  }
+
 
 
 
@@ -199,7 +227,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text('Pending orders'),
+          title: Text(pageTitle + ' orders'),
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.add),
@@ -210,18 +238,16 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
             PopupMenuButton<String>(
               onSelected: (val) async {
                 switch (val) {
-//                  case 'COMPLETED_ORDERS':
-//                    Navigator.of(context).pushNamed(CompletedOrdersScreen.routeName);
-//                    break;
                   case 'FILTER':
                     var newFilter = await _orderFilterDialog();
-                    if(newFilter != null){
+                    if(newFilter != null && newFilter.length>0){
                       setState(() {
                         pageCount = 1;
                         finalOrders = [];
                         filters = newFilter;
                         _isInit = true;
                       });
+                      setPageTitle(filters);
                     }
                     getOrderData(filters,1);
                     break;
@@ -258,25 +284,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
 
     );
   }
-  Widget _showFlushbar(BuildContext context,String msg) {
-    Flushbar(
-      duration: Duration(seconds: 3),
-      margin: EdgeInsets.only(bottom: 50),
-      padding: EdgeInsets.all(10),
-      borderRadius: 8,
-      backgroundColor: Colors.green.shade400,
-      boxShadows: [
-        BoxShadow(
-          color: Colors.black45,
-          offset: Offset(3, 3),
-          blurRadius: 3,
-        ),
-      ],
-      dismissDirection: FlushbarDismissDirection.HORIZONTAL,
-      forwardAnimationCurve: Curves.fastLinearToSlowEaseIn,
-      title: msg,
-    )..show(context);
-  }
+
 
   Widget queryItemListDataWidget(BuildContext context) {
     if (finalOrders.isNotEmpty) //has data & performing/not performing
@@ -292,7 +300,6 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
 //            return ChangeNotifierProvider.value(value: null,child:Text(''));
 
               return
-                finalOrders[i].status == '0'?
                 Card(
                 margin: EdgeInsets.all(10),
                 child: Column(
@@ -311,6 +318,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
+                            filters['status_array'][0] == 0 || filters['status_array'][0] == 1 ?
                             IconButton(
                               icon: Icon(Icons.cancel),
                               onPressed: () async {
@@ -362,7 +370,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
                                                   _isLoading = true;
 
                                                 });
-                                                Provider.of<Orders>(context, listen: false).fetchAndSetOrders(filters,[0],pageCount).then((data) {
+                                                Provider.of<Orders>(context, listen: false).fetchAndSetOrdersTest(filters,pageCount).then((data) {
                                                   setState(() {
                                                     finalOrders = data;
                                                     _isLoading = false;
@@ -385,8 +393,9 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
                                           ],
                                         ));
                               },
-                            ),
+                            ):SizedBox(width: 0.0,height: 0.0,),
                             SizedBox(width: 20.0,),
+                            filters['status_array'][0] == 0 || filters['status_array'][0] == 1 ?
                             IconButton(
                               icon: Icon(Icons.edit),
                               onPressed: () async{
@@ -410,7 +419,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
 
                                 Navigator.of(context).pushNamed(CartScreen.routeName, arguments: finalOrders[i].id);
                               },
-                            ),
+                            ):SizedBox(width: 0.0,height: 0.0,),
                           ],
                         ),
                       ),
@@ -422,7 +431,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
                     ),
                   ],
                 ),
-              ):SizedBox(width: 0.0,height: 0.0,);
+              );
             }
           },
         )
