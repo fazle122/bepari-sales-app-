@@ -52,7 +52,7 @@ class CartItem {
         discountType: data['discountType'],
         discountId: data['discountId'],
         perUnitDiscount: data['perUnitDiscount'] != null? data['perUnitDiscount'].toDouble():0.0,
-        vatRate: data['vatRate'].toDouble(),
+        vatRate: data['vatRate'] != null ? data['vatRate'].toDouble():0.0,
         orderId: data['orderId'],
       );
 
@@ -99,6 +99,7 @@ class Cart with ChangeNotifier {
   String id;
   CartItem cartItem;
   bool _isUpdateMood = false;
+  int _invoiceId;
 
   Cart({this.id, this.cartItem});
 
@@ -117,6 +118,14 @@ class Cart with ChangeNotifier {
   }
   set isUpdateMode(val){
     _isUpdateMood = val;
+    notifyListeners();
+  }
+
+  int get invoiceIdForUpdate{
+    return _invoiceId;
+  }
+  set invoiceIdForUpdate(val){
+    _invoiceId = val;
     notifyListeners();
   }
 

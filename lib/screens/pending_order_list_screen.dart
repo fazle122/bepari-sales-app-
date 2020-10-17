@@ -229,12 +229,35 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
         appBar: AppBar(
           title: Text(pageTitle + ' orders'),
           actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.add),
-              onPressed: (){
+            InkWell(
+              child: Container(
+                margin: EdgeInsets.all(10.0),
+                width: 80.0,
+                height: 10.0,
+                decoration: ShapeDecoration(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(width: 1.0, style: BorderStyle.solid,color: Colors.grey.shade500),
+                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                  ),
+                ),
+                child: Center(
+                    child: Text(
+                      'New Order',
+                      style:
+                      TextStyle(color: Theme.of(context).primaryColorDark,fontWeight: FontWeight.bold),
+                    )),
+              ),
+              onTap: () {
                 Navigator.pushNamed(context, ProductsOverviewScreen.routeName);
               },
             ),
+            // IconButton(
+            //   icon: Icon(Icons.add),
+            //   onPressed: (){
+            //     Navigator.pushNamed(context, ProductsOverviewScreen.routeName);
+            //   },
+            // ),
             PopupMenuButton<String>(
               onSelected: (val) async {
                 switch (val) {
@@ -287,6 +310,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
 
 
   Widget queryItemListDataWidget(BuildContext context) {
+
     if (finalOrders.isNotEmpty) //has data & performing/not performing
       return Container(
         child:  finalOrders != null && finalOrders.length > 0
@@ -305,16 +329,20 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
                 child: Column(
                   children: <Widget>[
                     ListTile(
-                      title: Text(
-                        DateFormat('EEEE, MMM d, ').format(
-                            finalOrders[i].dateTime) +
-                            convert12(DateFormat('hh:mm').format(
-                                finalOrders[i].dateTime)),
+                      title: Text('Invoice amount: ' + '\$${finalOrders[i].invoiceAmount}',style: TextStyle(fontSize: 16.0,fontWeight: FontWeight.bold),),
+                      subtitle:Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Flexible(child:Text('Customer name: ' + finalOrders[i].customerName,style: TextStyle(fontSize: 12.0,fontWeight: FontWeight.bold),),),
+                          Flexible(child:Text('Invoice date: ' + DateFormat('EEEE, MMM d, ').format(finalOrders[i].invoiceDate),style: TextStyle(fontSize: 12.0),),),
+                          // Flexible(child: Text('Invoice created: ' + DateFormat('EEEE, MMM d, ').format(finalOrders[i].createdAt) + convert12(DateFormat('hh:mm').format(finalOrders[i].createdAt)),style: TextStyle(fontSize: 10.0),),),
+                          Flexible(child: Text('Invoice created: ' + DateFormat('EEEE, MMM d, hh:mm aaa').format(finalOrders[i].createdAt.toLocal()),style: TextStyle(fontSize: 10.0),),),
+                        ],
                       ),
-                      subtitle: Text('Total amount: ' +
-                          '\$${finalOrders[i].invoiceAmount}'),
                       trailing: Container(
-                        width: 120,
+                        width: 100,
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: <Widget>[
@@ -394,11 +422,14 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
                                         ));
                               },
                             ):SizedBox(width: 0.0,height: 0.0,),
-                            SizedBox(width: 20.0,),
+                            // SizedBox(width: 20.0,),
                             filters['status_array'][0] == 0 || filters['status_array'][0] == 1 ?
                             IconButton(
                               icon: Icon(Icons.edit),
                               onPressed: () async{
+                                final cart = Provider.of<Cart>(context,listen: false);
+
+                                cart.invoiceIdForUpdate = finalOrders[i].id;
                                 List<Map<String,dynamic>> cartItemFromOrder;
                                 await DBHelper.clearCart();
                                 await Provider.of<Orders>(context,listen: false).fetchOrderForCart(finalOrders[i].id).then((data){
@@ -409,7 +440,6 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
                                     await DBHelper.createCartFromOrder(CartItem.fromJson(cartData));
                                   }).toList();
                                 });
-                                final cart = Provider.of<Cart>(context,listen: false);
 
                                 setState(() {
                                   cart.isUpdateMode = true;

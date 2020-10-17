@@ -6,6 +6,7 @@ import 'package:sales_app/providers/cart.dart';
 import 'package:sales_app/providers/products.dart';
 //import 'package:sales_app/providers/shipping_address.dart';
 import 'package:sales_app/screens/cart_screen.dart';
+import 'package:sales_app/screens/pending_order_list_screen.dart';
 import 'package:sales_app/widgets/app_drawer.dart';
 import 'package:sales_app/widgets/badge.dart';
 import 'package:sales_app/widgets/filter_item.dart';
@@ -155,17 +156,21 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
     }
   }
 
+//   Future<bool> onWillPop() {
+//     DateTime now = DateTime.now();
+//     if (currentBackPressTime == null ||
+//         now.difference(currentBackPressTime) > Duration(seconds: 2)) {
+//       currentBackPressTime = now;
+//       Toast.show("Press back again to exit the app", context,
+//           duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+// //      Fluttertoast.showToast(msg: exit_warning);
+//       return Future.value(false);
+//     }
+//     return Future.value(true);
+//   }
+
   Future<bool> onWillPop() {
-    DateTime now = DateTime.now();
-    if (currentBackPressTime == null ||
-        now.difference(currentBackPressTime) > Duration(seconds: 2)) {
-      currentBackPressTime = now;
-      Toast.show("Press back again to exit the app", context,
-          duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
-//      Fluttertoast.showToast(msg: exit_warning);
-      return Future.value(false);
-    }
-    return Future.value(true);
+    Navigator.of(context).pushNamed(PendingOrderListScreen.routeName);
   }
 
   @override

@@ -56,7 +56,7 @@ class OrderItemWidget extends StatelessWidget {
             ListTile(
               title: Text('\$${order.invoiceAmount}'),
               subtitle: Text(
-                DateFormat('dd/MM/yyyy hh:mm').format(order.dateTime),
+                DateFormat('dd/MM/yyyy hh:mm').format(order.invoiceDate),
               ),
               onTap: (){
                 Navigator.of(context).pushNamed(OrderDetailScreen.routeName,

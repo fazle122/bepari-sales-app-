@@ -12,16 +12,24 @@ class OrderItem {
   final String invoiceAmount;
   final String totalDue;
   final List<InvoiceItem> invoiceItem;
-  final DateTime dateTime;
+  final DateTime invoiceDate;
+  final DateTime createdAt;
   final String status;
+  final String customerName;
+  final String customerAddress;
+  final String customerMobileNo;
 
   OrderItem({
     @required this.id,
     @required this.invoiceAmount,
     @required this.totalDue,
     @required this.invoiceItem,
-    @required this.dateTime,
+    @required this.invoiceDate,
+    @required this.createdAt,
     @required this.status,
+    @required this.customerName,
+    @required this.customerAddress,
+    @required this.customerMobileNo,
   });
 }
 
@@ -192,7 +200,7 @@ class Orders with ChangeNotifier {
 
   Future<Map<String, dynamic>> updateInvoice(FormData formData, var invoiceId) async {
     Dio dioService = new Dio();
-    final url = ApiService.BASE_URL + 'api/V1.1/accounts/invoice/edit/$invoiceId';
+    final url = ApiService.BASE_URL + 'api/V1.1/accounts/invoice/edit-sales-app/$invoiceId';
 
     dioService.options.headers = {
       'Authorization': 'Bearer ' + authToken,
@@ -205,10 +213,9 @@ class Orders with ChangeNotifier {
     );
 
     final responseData = response.data;
-    // print(responseData);
     notifyListeners();
     if (response.statusCode == 200) {
-      return response.data;
+      return responseData;
     } else {
       return null;
     }
@@ -422,7 +429,9 @@ class Orders with ChangeNotifier {
             id: allOrders[i]['id'],
             invoiceAmount: allOrders[i]['invoice_amount'],
             totalDue: allOrders[i]['total_due'],
-            dateTime: DateTime.parse(allOrders[i]['invoice_date']),
+            invoiceDate: DateTime.parse(allOrders[i]['invoice_date']),
+            createdAt: DateTime.parse(allOrders[i]['created_at']),
+            customerName: allOrders[i]['customer_name'],
             status: allOrders[i]['status'].toString(),
           );
           loadedOrders.add(orders);
@@ -458,7 +467,7 @@ class Orders with ChangeNotifier {
         }
       }
      if (filters.containsKey('invoice_from_date') && filters['invoice_from_date'] != null) {
-       url += 'invoice_from_date=' + filters['invoice_from_date'].toString();
+       url += '&invoice_from_date=' + filters['invoice_from_date'].toString();
      }
      if (filters.containsKey('invoice_to_date') && filters['invoice_to_date'] != null) {
        url += '&invoice_to_date=' + filters['invoice_to_date'].toString();
@@ -490,7 +499,9 @@ class Orders with ChangeNotifier {
             id: allOrders[i]['id'],
             invoiceAmount: allOrders[i]['invoice_amount'],
             totalDue: allOrders[i]['total_due'],
-            dateTime: DateTime.parse(allOrders[i]['invoice_date']),
+            invoiceDate: DateTime.parse(allOrders[i]['invoice_date']),
+            createdAt: DateTime.parse(allOrders[i]['created_at']),
+            customerName: allOrders[i]['customer_name'],
             status: allOrders[i]['status'].toString(),
           );
           loadedOrders.add(orders);
@@ -523,14 +534,17 @@ class Orders with ChangeNotifier {
       return;
     }
 
-    var allOrders = extarctedData['data']['invoice'];
+    var allOrders = extarctedData['data'];
     final OrderItem orderItem = OrderItem(
-      id: allOrders['id'],
-      totalDue: allOrders['total_due'],
-      dateTime: DateTime.parse(allOrders['delivery_date']),
-      invoiceAmount: allOrders['invoice_amount'],
-      status: allOrders['status'].toString(),
-      invoiceItem: (allOrders['invoice_details'] as List<dynamic>)
+      id: allOrders['invoice']['id'],
+      totalDue: allOrders['invoice']['total_due'],
+      invoiceDate: DateTime.parse(allOrders['invoice']['delivery_date']),
+      invoiceAmount: allOrders['invoice']['invoice_amount'],
+      status: allOrders['invoice']['status'].toString(),
+      customerName: allOrders['customer']['name'],
+      customerAddress: allOrders['customer']['address'],
+      customerMobileNo: allOrders['customer']['mobile'],
+      invoiceItem: (allOrders['invoice']['invoice_details'] as List<dynamic>)
           .map((item) => InvoiceItem(
               id: item['id'],
               productID: item['product_id'],
@@ -615,7 +629,7 @@ class Orders with ChangeNotifier {
             id: allOrders[i]['id'],
             invoiceAmount: allOrders[i]['invoice_amount'].toDouble(),
             totalDue: allOrders[i]['total_due'].toDouble(),
-            dateTime: DateTime.parse(allOrders[i]['invoice_date']),
+            invoiceDate: DateTime.parse(allOrders[i]['invoice_date']),
           );
           loadedOrders.add(orders);
         }

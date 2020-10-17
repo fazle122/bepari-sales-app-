@@ -185,9 +185,28 @@ class OrderDetailScreen extends StatefulWidget {
                       child: Padding(
                         padding: EdgeInsets.all(8),
                         child: ListTile(
-//                          title: Text('Total amount:  ' + 'BDT\$${(orderDetailData.singOrderItem.totalDue.toString())}'),
-                          title: Text('Total amount:  ' + orderDetailData.singOrderItem.invoiceAmount + ' BDT'),
-                          subtitle: Text('Due : ' +orderDetailData.singOrderItem.totalDue.toString() + ' BDT'),
+
+                          title:Padding(
+                            padding: EdgeInsets.only(bottom: 10.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                Text('Total invoice amount: ' + orderDetailData.singOrderItem.invoiceAmount + ' BDT',style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18.0),),
+                                Text('Due: ' +orderDetailData.singOrderItem.totalDue.toString() + ' BDT'),
+
+                              ],
+                            ) ,
+                          ),
+
+                          subtitle: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text('Customer name: ' +orderDetailData.singOrderItem.customerName),
+                              Text('Address: ' +orderDetailData.singOrderItem.customerAddress),
+                              Text('Mobile no: ' +orderDetailData.singOrderItem.customerMobileNo),
+
+                  ],
+                        )
                           // subtitle: Text(
                           //   DateFormat('EEEE, MMM d, ').format(orderDetailData.singOrderItem.dateTime) +
                           //       convert12(DateFormat('hh:mm').format(orderDetailData.singOrderItem.dateTime)),

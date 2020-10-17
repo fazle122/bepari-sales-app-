@@ -42,8 +42,7 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
     cancelCommentController = TextEditingController();
     deliveryCommentController = TextEditingController();
     amountController = TextEditingController();
-    filters.putIfAbsent('status_array[0]', () => 1);
-    filters.putIfAbsent('status_array[1]', () => 4);
+    filters['status_array'] = [1,4];
     super.initState();
   }
 
@@ -57,7 +56,7 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
         });
         Provider.of<Cart>(context, listen: false).fetchAndSetCartItems1();
         Provider.of<Orders>(context, listen: false)
-            .fetchAndSetOrders(filters, [1, 4], pageCount)
+            .fetchAndSetOrdersTest(filters, pageCount)
             .then((data) {
           setState(() {
             finalOrders = data;
@@ -94,7 +93,7 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
         });
       }
       Provider.of<Orders>(context, listen: false)
-          .fetchAndSetOrders(filters, [1, 4], pageCount)
+          .fetchAndSetOrdersTest(filters, pageCount)
           .then((data) {
         isPerformingRequest = false;
         if (data == null || data.isEmpty) {
@@ -135,7 +134,7 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
         _isLoading = true;
       });
       Provider.of<Orders>(context, listen: false)
-          .fetchAndSetOrders(filters, [1, 4], 1)
+          .fetchAndSetOrdersTest(filters, 1)
           .then((_) {
         if (!mounted) return;
         setState(() {
@@ -193,43 +192,35 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
         appBar: AppBar(
           title: Text('Due Orders'),
           actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.add),
-              onPressed: () {
+            InkWell(
+              child: Container(
+                margin: EdgeInsets.all(10.0),
+                width: 80.0,
+                height: 10.0,
+                decoration: ShapeDecoration(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(width: 1.0, style: BorderStyle.solid,color: Colors.grey.shade500),
+                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                  ),
+                ),
+                child: Center(
+                    child: Text(
+                      'New Order',
+                      style:
+                      TextStyle(color: Theme.of(context).primaryColorDark,fontWeight: FontWeight.bold),
+                    )),
+              ),
+              onTap: () {
                 Navigator.pushNamed(context, ProductsOverviewScreen.routeName);
               },
             ),
-//             PopupMenuButton<String>(
-//               onSelected: (val) async {
-//                 switch (val) {
-// //                  case 'COMPLETED_ORDERS':
-// //                    Navigator.of(context).pushNamed(CompletedOrdersScreen.routeName);
-// //                    break;
-//                   case 'FILTER':
-//                     var newFilter = await _orderFilterDialog();
-//                     if (newFilter != null) {
-//                       setState(() {
-//                         pageCount = 1;
-//                         finalOrders = [];
-//                         filters = newFilter;
-//                         _isInit = true;
-//                       });
-//                     }
-//                     getOrderData(filters, 1);
-//                     break;
-//                 }
-//               },
-//               itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
-// //                PopupMenuItem<String>(
-// //                  value: 'COMPLETED_ORDERS',
-// //                  child: Text('Completed orders'),
-// //                ),
-//                 PopupMenuItem<String>(
-//                   value: 'FILTER',
-//                   child: Text('Filter'),
-//                 )
-//               ],
-//             ),
+            // IconButton(
+            //   icon: Icon(Icons.add),
+            //   onPressed: () {
+            //     Navigator.pushNamed(context, ProductsOverviewScreen.routeName);
+            //   },
+            // ),
           ],
         ),
         drawer: AppDrawer(),
@@ -266,14 +257,19 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
                       child: Column(
                         children: <Widget>[
                           ListTile(
-                            title: Text(
-                              DateFormat('EEEE, MMM d, ')
-                                      .format(finalOrders[i].dateTime) +
-                                  convert12(DateFormat('hh:mm')
-                                      .format(finalOrders[i].dateTime)),
+                            title: Text('Invoice amount: ' + '\$${finalOrders[i].invoiceAmount}',style: TextStyle(fontSize: 16.0,fontWeight: FontWeight.bold),),
+                            subtitle:Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Flexible(child:Text('Customer name: ' + finalOrders[i].customerName,style: TextStyle(fontSize: 12.0,fontWeight: FontWeight.bold),),),
+                                Flexible(child:Text('Invoice date: ' + DateFormat('EEEE, MMM d, ').format(finalOrders[i].invoiceDate),style: TextStyle(fontSize: 12.0),),),
+                                // Flexible(child: Text('Invoice created: ' + DateFormat('EEEE, MMM d, ').format(finalOrders[i].createdAt.toLocal()) + convert12(DateFormat('hh:mm').format(finalOrders[i].createdAt.toLocal())),style: TextStyle(fontSize: 10.0),),),
+                                Flexible(child: Text('Invoice created: ' + DateFormat('EEEE, MMM d, hh:mm aaa').format(finalOrders[i].createdAt.toLocal()),style: TextStyle(fontSize: 10.0),),),
+
+                              ],
                             ),
-                            subtitle: Text('Total amount: ' +
-                                '\$${finalOrders[i].invoiceAmount}'),
                             trailing: Container(
                               width: 120,
                               child: Row(
@@ -348,9 +344,8 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
                                                                     context,
                                                                     listen:
                                                                         false)
-                                                                .fetchAndSetOrders(
+                                                                .fetchAndSetOrdersTest(
                                                                     filters,
-                                                                    [1, 4],
                                                                     pageCount)
                                                                 .then((data) {
                                                               setState(() {
@@ -389,6 +384,8 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
                                       ? IconButton(
                                           icon: Icon(Icons.edit),
                                           onPressed: () async {
+                                            final cart = Provider.of<Cart>(context,listen: false);
+                                            cart.invoiceIdForUpdate = finalOrders[i].id;
                                             List<Map<String, dynamic>>
                                                 cartItemFromOrder;
                                             await DBHelper.clearCart();
@@ -408,9 +405,6 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
                                                             cartData));
                                               }).toList();
                                             });
-                                            final cart = Provider.of<Cart>(
-                                                context,
-                                                listen: false);
 
                                             setState(() {
                                               cart.isUpdateMode = true;

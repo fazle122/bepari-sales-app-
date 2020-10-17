@@ -78,14 +78,37 @@ class _CartScreenState extends BaseState<CartScreen> {
     final auth = Provider.of<Auth>(context);
     return Scaffold(
         appBar: AppBar(
-          title: Text('Cart items'),
+          title: Text('Cart items',),
           actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.add),
-              onPressed: () {
+            InkWell(
+              child: Container(
+                margin: EdgeInsets.all(10.0),
+                width: 70.0,
+                height: 10.0,
+                decoration: ShapeDecoration(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(width: 1.0, style: BorderStyle.solid,color: Colors.grey.shade500),
+                    borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                  ),
+                ),
+                child: Center(
+                    child: Text(
+                      'Add Item',
+                      style:
+                      TextStyle(color: Theme.of(context).primaryColorDark,fontWeight: FontWeight.bold),
+                    )),
+              ),
+              onTap: () {
                 Navigator.pushNamed(context, ProductsOverviewScreen.routeName);
               },
             ),
+            // IconButton(
+            //   icon: Icon(Icons.add),
+            //   onPressed: () {
+            //     Navigator.pushNamed(context, ProductsOverviewScreen.routeName);
+            //   },
+            // ),
           ],
         ),
         drawer: AppDrawer(),
@@ -157,18 +180,10 @@ class _CartScreenState extends BaseState<CartScreen> {
                                             Theme.of(context).primaryColor,
                                         child: Text('Order now'),
                                         onPressed: () {
-                                          invoiceId == null
-                                              ? Navigator.of(context).pushNamed(
-                                                  CreateOrderScreen.routeName,
-                                                  arguments: cart)
-                                              : Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          CreateOrderScreen(
-                                                              cart: cart,
-                                                              invoiceId:
-                                                                  invoiceId)));
+                                          cart.invoiceIdForUpdate == null
+                                              ? Navigator.of(context).pushNamed(CreateOrderScreen.routeName, arguments: cart)
+                                              // : Navigator.push(context, MaterialPageRoute(builder: (context) => CreateOrderScreen(cart: cart, invoiceId: invoiceId)));
+                                          : Navigator.push(context, MaterialPageRoute(builder: (context) => CreateOrderScreen(cart: cart, invoiceId: cart.invoiceIdForUpdate)));
                                         },
                                       )
                                     ],

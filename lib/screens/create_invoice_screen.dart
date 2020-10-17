@@ -239,9 +239,6 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
       return;
     }
     _form.currentState.save();
-    // setState(() {
-    //   _isLoading = true;
-    // });
 
     print(selectedCustomerId.toString());
     print(selectedBranchId.toString());
@@ -305,9 +302,7 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
     data.putIfAbsent('ship_to_customer_address', () => shipToCustomerAddress);
 
     FormData formData;
-    setState(() {
-      _isLoading = true;
-    });
+
     if(widget.invoiceId == null){
       formData = FormData.fromMap(data);
       if(invoiceStatus == null && partialAmount == null) {
@@ -347,6 +342,9 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
                 FlatButton(
                   child: Text('Save'),
                   onPressed: () async{
+                    setState(() {
+                      _isLoading = true;
+                    });
                     var response = await Provider.of<Orders>(context, listen: false).createInvoiceForSales(formData);
                     if(response != null){
                       await cart.clearCartTable();
@@ -408,6 +406,9 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
                 FlatButton(
                   child: Text('Save and pay'),
                   onPressed: () async{
+                    setState(() {
+                      _isLoading = true;
+                    });
                     var response = await Provider.of<Orders>(context, listen: false).createInvoiceForSales(formData);
                     if(response != null){
                       await cart.clearCartTable();
@@ -477,6 +478,9 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
                 FlatButton(
                   child: Text('Save with due'),
                   onPressed: () async{
+                    setState(() {
+                      _isLoading = true;
+                    });
                     var response = await Provider.of<Orders>(context, listen: false).createInvoiceForSales(formData);
                     if(response != null){
                       await cart.clearCartTable();
@@ -500,14 +504,217 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
             ));
       }
     }else{
-      data.putIfAbsent('invoice_id', () => widget.invoiceId);
+      // data.putIfAbsent('invoice_id', () => widget.invoiceId);
       formData = FormData.fromMap(data);
-      showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (context) => ConfirmInvoiceDialog(formData,invoiceStatus,widget.invoiceId)
-      );
-      // response = await Provider.of<Orders>(context, listen: false).updateInvoice(formData,widget.invoiceId);
+
+      if(invoiceStatus == null && partialAmount == null) {
+        formData = FormData.fromMap(data);
+        showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (context) =>
+            // ConfirmInvoiceDialog(formData,null,null)
+            AlertDialog(
+              title: Center(child:Text('Update invoice')),
+              content:
+              Container(
+                height: 80,
+                child: Column(
+                  children: <Widget>[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text('Invoice amount : '),
+                        SizedBox(width: 10,),
+                        Text(invoiceAmount.toString())
+                      ],
+                    ),
+                    SizedBox(height: 20,),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Flexible(
+                          child:Text('Are your sure, you want to update invoice only?'),)
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('Update'),
+                  onPressed: () async{
+                    setState(() {
+                      _isLoading = true;
+                    });
+                    var response = await Provider.of<Orders>(context, listen: false).updateInvoice(formData,widget.invoiceId);
+                    if(response != null){
+                      await cart.clearCartTable();
+                      cart.invoiceIdForUpdate = null;
+                      Toast.show(response['msg'], context,
+                          duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                      Navigator.of(context).pushReplacementNamed(PendingOrderListScreen.routeName);
+                    }else{
+                      Toast.show('Something went wrong, please try again.', context,
+                          duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                      Navigator.of(context).pushReplacementNamed(ProductsOverviewScreen.routeName);
+                    }
+                  },
+                ),
+                FlatButton(
+                  child: Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                ),
+              ],
+            ));
+
+      }
+      else if(invoiceStatus == 5 && partialAmount == null){
+        data.putIfAbsent('invoice_status', () => invoiceStatus);
+        formData = FormData.fromMap(data);
+        showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (context) =>
+            // ConfirmInvoiceDialog(formData,null,null)
+            AlertDialog(
+              title: Center(child:Text('Update and pay invoice')),
+              content:
+              Container(
+                height: 80,
+                child: Column(
+                  children: <Widget>[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text('Invoice amount : '),
+                        SizedBox(width: 10,),
+                        Text(invoiceAmount.toString())
+                      ],
+                    ),
+                    SizedBox(height: 20,),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Flexible(
+                          child:Text('Are your sure, you want to update and pay invoice?'),)
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('Update and pay'),
+                  onPressed: () async{
+                    setState(() {
+                      _isLoading = true;
+                    });
+                    var response = await Provider.of<Orders>(context, listen: false).updateInvoice(formData,widget.invoiceId);
+                    if(response != null){
+                      await cart.clearCartTable();
+                      cart.invoiceIdForUpdate = null;
+                      Toast.show(response['msg'], context,
+                          duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                      Navigator.of(context).pushReplacementNamed(ProductsOverviewScreen.routeName);
+                    }else{
+                      Toast.show('Something went wrong, please try again.', context,
+                          duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                      Navigator.of(context).pushReplacementNamed(ProductsOverviewScreen.routeName);
+                    }
+                  },
+                ),
+                FlatButton(
+                  child: Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                ),
+              ],
+            ));
+
+      }else if(invoiceStatus == 4 || invoiceStatus == 1){
+        data.putIfAbsent('invoice_status', () => invoiceStatus);
+        data.putIfAbsent('receipt_amount', () => partialAmount);
+        formData = FormData.fromMap(data);
+        showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (context) =>
+            // ConfirmInvoiceDialog(formData,null,null)
+            AlertDialog(
+              title: Center(child:Text('Update with due invoice')),
+              content:
+              Container(
+                height: 100,
+                child: Column(
+                  children: <Widget>[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text('Invoice amount : '),
+                        SizedBox(width: 10,),
+                        Text(invoiceAmount.toString())
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text('Current payment : '),
+                        SizedBox(width: 10,),
+                        Text(partialAmount.toString())
+                      ],
+                    ),
+                    SizedBox(height: 20,),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Flexible(
+                          child:Text('Are your sure, you want to update with due invoice?'),)
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: <Widget>[
+                FlatButton(
+                  child: Text('Update with due'),
+                  onPressed: () async{
+                    setState(() {
+                      _isLoading = true;
+                    });
+                    var response = await Provider.of<Orders>(context, listen: false).updateInvoice(formData,widget.invoiceId);
+                    if(response != null){
+                      await cart.clearCartTable();
+                      cart.invoiceIdForUpdate = null;
+
+                      Toast.show(response['msg'], context,
+                          duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                      Navigator.of(context).pushReplacementNamed(DueOrderListScreen.routeName);
+                    }else{
+                      Toast.show('Something went wrong, please try again.', context,
+                          duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                      Navigator.of(context).pushReplacementNamed(ProductsOverviewScreen.routeName);
+                    }
+                  },
+                ),
+                FlatButton(
+                  child: Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                ),
+              ],
+            ));
+      }
+      // formData = FormData.fromMap(data);
+      // showDialog(
+      //     barrierDismissible: false,
+      //     context: context,
+      //     builder: (context) => ConfirmInvoiceDialog(formData,invoiceStatus,widget.invoiceId)
+      // );
     }
   }
 
@@ -577,7 +784,8 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
                     child: RaisedButton(
                       color: Theme.of(context).primaryColor,
                       textColor: Colors.white,
-                      child: Text("Save \n Invoice".toUpperCase(),textAlign: TextAlign.center,
+                      child: Text(widget.invoiceId == null ? "Save \n Invoice".toUpperCase():"Update \n Invoice".toUpperCase(),
+                          textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 14)),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25.0),
@@ -599,7 +807,8 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
                     child: RaisedButton(
                       color: Theme.of(context).primaryColor,
                       textColor: Colors.white,
-                      child: Text("Save \n and paid".toUpperCase(),textAlign: TextAlign.center,
+                      child: Text(widget.invoiceId == null ? "Save \n and paid".toUpperCase():"Update \n and paid".toUpperCase(),
+                          textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 14)),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25.0),
@@ -621,7 +830,7 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
                     child: RaisedButton(
                       color: Theme.of(context).primaryColor,
                       textColor: Colors.white,
-                      child: Text("Save \n with Due".toUpperCase(),textAlign: TextAlign.center,
+                      child: Text(widget.invoiceId == null ? "Save \n with Due".toUpperCase():"Update \n with Due".toUpperCase(),textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 14)),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25.0),
