@@ -34,16 +34,24 @@ class _CartScreenState extends BaseState<CartScreen> {
   bool isUpdateMood = false;
   List<Map<String, dynamic>> cartItemFromOrder = [];
   double deliveryCharge;
+  TextEditingController quantityController;
+
+  @override
+  void initState() {
+    quantityController = TextEditingController();
+    super.initState();
+  }
 
   @override
   void didChangeDependencies() {
     final orderId = ModalRoute.of(context).settings.arguments as int;
+    final cart = Provider.of<Cart>(context);
+    final orders = Provider.of<Orders>(context);
     if (_isInit) {
       setState(() {
         _isLoading = true;
       });
-      Provider.of<Cart>(context).fetchAndSetCartItems1();
-      fetchDeliveryCharge();
+      getData(cart, orders);
     }
     setState(() {
       _isLoading = false;
@@ -52,19 +60,38 @@ class _CartScreenState extends BaseState<CartScreen> {
     super.didChangeDependencies();
   }
 
-  fetchDeliveryCharge() async {
+  getData(Cart cart,Orders orders) async{
+    await Provider.of<Cart>(context).fetchAndSetCartItems1();
+    if(cart.isUpdateMode) {
+      for(int i = 0; i<cart.items.length; i++){
+        if(cart.items[i].productId == '1'){
+          orders.deliveryCharge = cart.items[i].price;
+        }
+      }
+    }else{
+      if (cart.items.length > 0 && orders.deliveryCharge != null) {
+        fetchDeliveryCharge(cart.totalAmount - orders.deliveryCharge);
+      } else {
+        fetchDeliveryCharge(cart.totalAmount);
+      }
+    }
+  }
+
+  fetchDeliveryCharge(double totalAmount) async {
     final cart = Provider.of<Cart>(context, listen: false);
+    final orders = Provider.of<Orders>(context, listen: false);
       bool isChargeApplied = cart.items.any((element) => element.productId == '1');
       if(isChargeApplied) {
         Map<String, dynamic> data = Map();
-        data.putIfAbsent('amount', () => cart.totalAmount.toDouble());
+        // data.putIfAbsent('amount', () => cart.totalAmount.toDouble());
+        data.putIfAbsent('amount', () => totalAmount.toDouble());
         FormData formData = FormData.fromMap(data);
         var response = await Provider.of<Orders>(context, listen: false)
             .defaultDeliveryCharge(formData);
         if (response != null) {
           setState(() {
-            deliveryCharge =
-                response['data']['product']['unit_price'].toDouble();
+            deliveryCharge = response['data']['product']['unit_price'].toDouble();
+            orders.deliveryCharge = response['data']['product']['unit_price'].toDouble();
           });
         }
       }
@@ -103,12 +130,6 @@ class _CartScreenState extends BaseState<CartScreen> {
                 Navigator.pushNamed(context, ProductsOverviewScreen.routeName);
               },
             ),
-            // IconButton(
-            //   icon: Icon(Icons.add),
-            //   onPressed: () {
-            //     Navigator.pushNamed(context, ProductsOverviewScreen.routeName);
-            //   },
-            // ),
           ],
         ),
         drawer: AppDrawer(),
@@ -180,6 +201,7 @@ class _CartScreenState extends BaseState<CartScreen> {
                                             Theme.of(context).primaryColor,
                                         child: Text('Order now'),
                                         onPressed: () {
+                                          // await cart.
                                           cart.invoiceIdForUpdate == null
                                               ? Navigator.of(context).pushNamed(CreateOrderScreen.routeName, arguments: cart)
                                               // : Navigator.push(context, MaterialPageRoute(builder: (context) => CreateOrderScreen(cart: cart, invoiceId: invoiceId)));
@@ -189,14 +211,11 @@ class _CartScreenState extends BaseState<CartScreen> {
                                     ],
                                   ),
                                   Consumer<Orders>(
-                                      builder: (context, cartData, child) =>
+                                      builder: (context, orderData, child) =>
                                           Text(
-                                            cartData.deliveryCharge != null
-                                                ? 'Delivery Charge : ' +
-                                                    cartData.deliveryCharge
-                                                        .toString() +
-                                                    ' BDT'
-                                                : 'Delivery Charge : 00.00 BDT',
+                                            cart.items.length > 0  && orderData.deliveryCharge == null
+                                                ? 'Delivery Charge : 00.00 BDT'
+                                                : 'Delivery Charge : ' + orderData.deliveryCharge.toString() + ' BDT',
                                             style: TextStyle(
                                                 fontSize: 14.0,
                                                 color: Colors.grey),
@@ -370,10 +389,108 @@ class _CartScreenState extends BaseState<CartScreen> {
                                                               barrierDismissible:
                                                                   false,
                                                               builder: (context) =>
-                                                                  UpdateQuantityDialog(
-                                                                      cartItem:
-                                                                          cartData
-                                                                              .items[i]));
+
+                                                                  AlertDialog(
+                                                                    shape: RoundedRectangleBorder(
+                                                                        borderRadius: BorderRadius.all(Radius.circular(5.0))),
+                                                                    title: Container(
+                                                                      child: Center(
+                                                                        child: Text(
+                                                                          'Update quantity',
+                                                                          style: TextStyle(fontSize: 20.0),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                    content: Container(
+                                                                      child: Column(
+                                                                        mainAxisSize: MainAxisSize.min,
+                                                                        children: <Widget>[
+                                                                          Column(
+                                                                            mainAxisSize: MainAxisSize.min,
+                                                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                                                            children: <Widget>[
+                                                                              Container(
+                                                                                  margin: EdgeInsets.all(3.0),
+                                                                                  child: Text(cartData.items[i].title,
+                                                                                    style: TextStyle(
+                                                                                        fontWeight: FontWeight.bold, fontSize: 13.0),
+                                                                                  )),
+                                                                              Container(
+                                                                                width: MediaQuery.of(context).size.width,
+                                                                                // padding: EdgeInsets.only(left: 8.0, right: 8.0),
+                                                                                child: Row(
+                                                                                  mainAxisSize: MainAxisSize.min,
+                                                                                  children: <Widget>[
+                                                                                    Container(
+                                                                                      width: MediaQuery.of(context).size.width * 1/3,
+                                                                                      child: Text('Quantity'),
+                                                                                    ),
+                                                                                    Container(
+                                                                                        width: MediaQuery.of(context).size.width * 1/3,
+                                                                                        child: TextField(
+                                                                                            controller: quantityController,
+                                                                                            keyboardType: TextInputType.number,
+                                                                                            decoration: InputDecoration(
+                                                                                              hintText: cartData.items[i].quantity.toString(),
+                                                                                              contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
+                                                                                              // hintText: data,
+
+                                                                                            ))
+                                                                                    )
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                    actions: <Widget>[
+
+                                                                      FlatButton(
+                                                                        child: Text('Update'),
+                                                                        onPressed: () async{
+                                                                          await DBHelper.updateItemQuantity('cartTable', cartData.items[i].productId, double.parse(quantityController.text));
+                                                                          if (!mounted) return;
+                                                                          setState(() {
+                                                                            _isInit = true;
+                                                                          });
+                                                                          await Provider.of<Cart>(context,listen: false).fetchAndSetCartItems1();
+                                                                          setState(() {
+                                                                            _isInit = false;
+                                                                          });
+                                                                            if(cart.items.length>0 && orders.deliveryCharge != null) {
+                                                                              await fetchDeliveryCharge(cart.totalAmount - orders.deliveryCharge);
+                                                                            }else{
+                                                                              await fetchDeliveryCharge(cart.totalAmount);
+                                                                            }
+                                                                          // Future.delayed(Duration(milliseconds: 500)).then((_) async{
+                                                                          //   if (!mounted) return;
+                                                                          //   setState(() {
+                                                                          //     _isInit = true;
+                                                                          //   });
+                                                                          //   var amount = await cart.totalAmount;
+                                                                          //
+                                                                          //   if(cart.items.length>0 && orders.deliveryCharge != null) {
+                                                                          //     await fetchDeliveryCharge(amount - orders.deliveryCharge);
+                                                                          //   }else{
+                                                                          //     await fetchDeliveryCharge(amount);
+                                                                          //   }
+                                                                          //
+                                                                          // } );
+                                                                          quantityController.clear();
+                                                                          Navigator.of(context).pop(true);},),
+                                                                      FlatButton(child: Text('Cancel'), onPressed: (){Navigator.of(context).pop(false);},),
+                                                                    ],
+//      ),
+                                                                  )
+
+                                                                  // UpdateQuantityDialog(
+                                                                  //     cartItem:cartData.items[i])
+
+
+
+                                                          );
 
                                                           // cart.removeSingleItem(cartData.items[i].productId, cartData.items[i].title, cartData.items[i].price,cartData.items[i].isNonInventory,cartData.items[i].discount,cartData.items[i].discountId,cartData.items[i].discountType);
                                                         },
@@ -381,10 +498,19 @@ class _CartScreenState extends BaseState<CartScreen> {
                                                       IconButton(
                                                         icon:
                                                             Icon(Icons.delete),
-                                                        onPressed: () {
-                                                          cart.removeCartItemRow(
-                                                              cartData.items[i]
-                                                                  .productId);
+                                                        onPressed: () async{
+
+                                                          if(orders.deliveryCharge != null && cart.items.length == 2){
+                                                            // await cart.removeCartItemRow('1');
+                                                            await cart.clearCartTable();
+                                                            if (!mounted) return;
+                                                            setState(() {
+                                                              orders.deliveryCharge = null;
+                                                            });
+                                                          }else {
+                                                            cart.removeCartItemRow(cartData.items[i].productId);
+                                                          }
+
                                                           if (!mounted) return;
                                                           setState(() {
                                                             _isInit = true;
@@ -428,8 +554,8 @@ class _CartScreenState extends BaseState<CartScreen> {
                                         padding: EdgeInsets.only(left: 20.0),
                                         color: Theme.of(context).primaryColor,
                                         child: Center(
-                                          child: Text('Total amount : ' + cart.totalAmount.toStringAsFixed(2),
-                                            style: TextStyle(color: Colors.white),),
+                                          child: Text('Total invoice amount : ' + cart.totalAmount.toStringAsFixed(2),
+                                            style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),),
                                         )),
                                     Container(
                                       height:

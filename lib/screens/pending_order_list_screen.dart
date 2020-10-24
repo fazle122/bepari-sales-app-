@@ -1,5 +1,3 @@
-
-import 'package:flushbar/flushbar.dart';
 import 'package:sales_app/base_state.dart';
 import 'package:sales_app/data_helper/local_db_helper.dart';
 import 'package:sales_app/providers/cart.dart';
@@ -14,8 +12,6 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:sales_app/widgets/order_fiter_dialog.dart';
 import 'package:toast/toast.dart';
-
-
 
 class PendingOrderListScreen extends StatefulWidget {
   static const routeName = '/pending-orders';
@@ -78,7 +74,7 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
     _scrollController.addListener(() {
 //      if (pageCount - oldPageCount == 1 || oldPageCount - pageCount == 1) {
       _isInit = true;
-      if (pageCount < lastPage) if (_scrollController.position.pixels ==
+      if (pageCount <= lastPage) if (_scrollController.position.pixels ==
           _scrollController.position.maxScrollExtent) {
         setState(() {
           pageCount += 1;
@@ -123,8 +119,6 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
     return finalOrders;
   }
 
-
-
   void animateScrollBump() {
     double edge = 50.0;
     double offsetFromBottom = _scrollController.position.maxScrollExtent -
@@ -137,49 +131,12 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
     }
   }
 
-  getData(Map<String,dynamic> filters){
-    if(_isInit) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = true;
-      });
-      Provider.of<Orders>(context,listen: false).fetchAndSetOrdersTest(filters,1).then((_){
-        if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-        });
-      });
-    }
-    _isInit = false;
-  }
-
   Future<Map<String, dynamic>> _orderFilterDialog() async {
     return showDialog<Map<String, dynamic>>(
       barrierDismissible: false,
       context: context,
       builder: (BuildContext context) => OrderFilterDialog(),
     );
-  }
-
-  String convert12(String str) {
-    String finalTime;
-    int h1 = int.parse(str.substring(0, 1)) - 0;
-    int h2 = int.parse(str.substring(1, 2));
-    int hh = h1 * 10 + h2;
-
-    String Meridien;
-    if (hh < 12) {
-      Meridien = " AM";
-    } else
-      Meridien = " PM";
-    hh %= 12;
-    if (hh == 0 && Meridien == ' PM') {
-      finalTime = '12' + str.substring(2);
-    } else {
-      finalTime = hh.toString() + str.substring(2);
-    }
-    finalTime = finalTime + Meridien;
-    return finalTime;
   }
 
   Widget _buildProgressIndicator() {
@@ -219,8 +176,6 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
     }
 
   }
-
-
 
 
   @override
@@ -307,7 +262,6 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
 
     );
   }
-
 
   Widget queryItemListDataWidget(BuildContext context) {
 

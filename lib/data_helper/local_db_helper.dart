@@ -84,8 +84,7 @@ class DBHelper {
         'UPDATE cartTable SET quantity = $quantity WHERE productId = $productId');
   }
 
-  static Future<void> increaseItemQuantity(
-      String table, String productId) async {
+  static Future<void> increaseItemQuantity(String table, String productId) async {
     final db = await DBHelper.database();
     db.rawUpdate(
         'UPDATE cartTable SET quantity = quantity+1.0 WHERE productId = $productId');

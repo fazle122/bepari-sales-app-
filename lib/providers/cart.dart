@@ -100,6 +100,7 @@ class Cart with ChangeNotifier {
   CartItem cartItem;
   bool _isUpdateMood = false;
   int _invoiceId;
+  var _subtotalAmount = 0.0;
 
   Cart({this.id, this.cartItem});
 
@@ -135,8 +136,9 @@ class Cart with ChangeNotifier {
       total += item.price.toDouble() * item.quantity;
     });
     return total;
-//    notifyListeners();
+   // notifyListeners();
   }
+
 
   CartItem findById(String id) {
     return _items.firstWhere((item) => item.id == id);
@@ -189,6 +191,7 @@ class Cart with ChangeNotifier {
           ),
         )
         .toList();
+
     notifyListeners();
   }
 
@@ -228,7 +231,7 @@ class Cart with ChangeNotifier {
       await DBHelper.increaseItemQuantity('cartTable',productId
       );
     }
-    fetchAndSetCartItems();
+    fetchAndSetCartItems1();
   }
 
   Future<void> removeSingleItem(String productId) async {
@@ -241,14 +244,14 @@ class Cart with ChangeNotifier {
     }
 //    notifyListeners();
 
-    fetchAndSetCartItems();
+    fetchAndSetCartItems1();
   }
 
   Future<void> removeCartItemRow(String productId) async {
     await DBHelper.deleteCartItm(productId);
 //    notifyListeners();
 
-    fetchAndSetCartItems();
+    fetchAndSetCartItems1();
   }
 
   void clearCartTable() {

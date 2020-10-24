@@ -139,6 +139,8 @@ class Orders with ChangeNotifier {
       return response.data;
     } else {
       return null;
+      // throw error;
+
     }
   }
 
@@ -165,7 +167,8 @@ class Orders with ChangeNotifier {
         return null;
       }
     }catch(error){
-      throw error;
+      return null;
+      // throw error;
     }
   }
 
@@ -218,10 +221,12 @@ class Orders with ChangeNotifier {
       return responseData;
     } else {
       return null;
+      // throw error;
+
     }
   }
 
-  void commentOrder(String orderId, String comment) async {
+  Future<Map<String,dynamic>> commentOrder(String orderId, String comment) async {
     var responseData;
     final url = ApiService.BASE_URL +
         'api/V1.1/accounts/order-delivery/comment-order-delivery/$orderId';
@@ -240,13 +245,14 @@ class Orders with ChangeNotifier {
         headers: headers,
       );
       responseData = json.decode(response.body);
-      if (responseData['error'] != null) {
-        throw HttpException(responseData['error']['message']);
+      if (response.statusCode == 200) {
+        return responseData;
       }
-
-      notifyListeners();
+      return null;
     } catch (error) {
-      throw error;
+      return null;
+      // throw error;
+
     }
   }
 
@@ -271,7 +277,8 @@ class Orders with ChangeNotifier {
       }
       return null;
     } catch (error) {
-      throw error;
+      return null;
+      // throw error;
     }
   }
 
@@ -296,7 +303,8 @@ class Orders with ChangeNotifier {
       }
       return null;
     } catch (error) {
-      throw error;
+      return null;
+      // throw error;
     }
   }
 
@@ -324,7 +332,8 @@ class Orders with ChangeNotifier {
         return null;
       }
     }catch(error){
-      throw error;
+      return null;
+      // throw error;
     }
   }
 
@@ -353,7 +362,8 @@ class Orders with ChangeNotifier {
       return null;
 
     } catch (error) {
-      throw error;
+      return null;
+      // throw error;
     }
   }
 
@@ -382,8 +392,7 @@ class Orders with ChangeNotifier {
     }
   }
 
-  Future<List<OrderItem>> fetchAndSetOrders(
-      Map<String, dynamic> filters,List statusArray, int pageCount) async {
+  Future<List<OrderItem>> fetchAndSetOrders(Map<String, dynamic> filters,List statusArray, int pageCount) async {
 
     String url = 'http://new.bepari.net/demo/api/V1.1/accounts/invoice/list?page_size=10&page=$pageCount';
     for(int i=0; i<statusArray.length;i++){
@@ -444,7 +453,8 @@ class Orders with ChangeNotifier {
       notifyListeners();
       return _orders;
     } catch (error) {
-      throw (error);
+      return null;
+      // throw (error);
     }
   }
 
@@ -514,7 +524,8 @@ class Orders with ChangeNotifier {
       notifyListeners();
       return _orders;
     } catch (error) {
-      throw (error);
+      return null;
+      // throw (error);
     }
   }
 
@@ -555,6 +566,13 @@ class Orders with ChangeNotifier {
 
 //          for(int i = 0; i<allOrders['invoice_details'].length; i++){}
     );
+    for(int i =0; i<orderItem.invoiceItem.length; i++){
+      if(orderItem.invoiceItem[i].productID == 1){
+        _deliveryCharge = double.parse(orderItem.invoiceItem[i].unitPrice);
+        notifyListeners();
+      }
+    }
+
     _orderItem = orderItem;
     notifyListeners();
   }
@@ -639,7 +657,8 @@ class Orders with ChangeNotifier {
       }
       notifyListeners();
     } catch (error) {
-      throw (error);
+      return null;
+      // throw (error);
     }
   }
 

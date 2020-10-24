@@ -173,10 +173,10 @@ class _ProductItemGridView extends State<ProductItemGridView> {
 
                                     );
 
-                                    Future.delayed(Duration(milliseconds: 200)).then((_) {
-                                      if(cart.items.length>0)
-                                        _showFlushbar(context,cart);
-                                    } );
+                                    // Future.delayed(Duration(milliseconds: 200)).then((_) {
+                                    //   if(cart.items.length>0)
+                                    //     _showFlushbar(context,cart);
+                                    // } );
 
 
 
@@ -270,10 +270,10 @@ class _ProductItemGridView extends State<ProductItemGridView> {
                                   onTap: () async{
                                     await cart.removeSingleItem(product.id);
 
-                                    Future.delayed(Duration(milliseconds: 200)).then((_) {
-                                      if(cart.items.length>0)
-                                        _showFlushbar(context,cart);
-                                    } );
+                                    // Future.delayed(Duration(milliseconds: 200)).then((_) {
+                                    //   if(cart.items.length>0)
+                                    //      _showFlushbar(context,cart);
+                                    // } );
 
 //                                    Scaffold.of(context).hideCurrentSnackBar();
 //                                Scaffold.of(context).showSnackBar(SnackBar(
@@ -353,10 +353,10 @@ class _ProductItemGridView extends State<ProductItemGridView> {
                                     product.vatRate
                                 );
 
-                                    Future.delayed(Duration(milliseconds: 200)).then((_) {
-                                      if(cart.items.length>0)
-                                        _showFlushbar(context,cart);
-                                } );
+                                //     Future.delayed(Duration(milliseconds: 200)).then((_) {
+                                //       if(cart.items.length>0)
+                                //         _showFlushbar(context,cart);
+                                // } );
                               },
                             )))
             ],

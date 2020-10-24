@@ -1,7 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sales_app/providers/cart.dart';
+import 'package:sales_app/providers/orders.dart';
 //import 'package:sales_app/providers/productCategories.dart';
 import 'package:sales_app/providers/products.dart';
 //import 'package:sales_app/providers/shipping_address.dart';
@@ -39,12 +41,15 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
   int lastItemId = 0;
   List<Product> finalProduct = [];
   bool isPerformingRequest = false;
+  double deliveryCharge;
+
 
 
   @override
   void didChangeDependencies() {
     final products = Provider.of<Products>(context, listen: false);
     final cat = ModalRoute.of(context).settings.arguments as String;
+    fetchDeliveryCharge();
     if (pageCount == 1) {
       if (_isInit) {
         setState(() {
@@ -93,6 +98,23 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
     super.didChangeDependencies();
   }
 
+  fetchDeliveryCharge() async {
+    final cart = Provider.of<Cart>(context, listen: false);
+    bool isChargeApplied = cart.items.any((element) => element.productId == '1');
+    if(isChargeApplied) {
+      Map<String, dynamic> data = Map();
+      data.putIfAbsent('amount', () => cart.totalAmount.toDouble());
+      FormData formData = FormData.fromMap(data);
+      var response = await Provider.of<Orders>(context, listen: false)
+          .defaultDeliveryCharge(formData);
+      if (response != null) {
+        setState(() {
+          deliveryCharge =
+              response['data']['product']['unit_price'].toDouble();
+        });
+      }
+    }
+  }
 
   List<Product> getData() {
     final cat = ModalRoute.of(context).settings.arguments as String;
@@ -177,6 +199,7 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
   Widget build(BuildContext context) {
     final products = finalProduct;
     final cart = Provider.of<Cart>(context, listen: false);
+    final orders = Provider.of<Orders>(context,listen: false);
 
     return Scaffold(
         appBar: AppBar(
@@ -202,7 +225,7 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
             Consumer<Cart>(
               builder: (context, cart, ch) => Badge(
                 child: ch,
-                value: cart.itemCount.toString(),
+                value: orders.deliveryCharge == null ? cart.itemCount.toString():(cart.itemCount-1).toString(),
               ),
               child: IconButton(
                 icon: Icon(Icons.shopping_cart),
@@ -235,7 +258,7 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
 
                   Consumer<Cart>(
                     builder: (context, cartData, child) =>
-                    cart.items.length > 0
+                    cartData.items.length > 0
                         ?
                     Container(
                         height: 50.0,
@@ -250,33 +273,21 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
                                 EdgeInsets.only(left: 20.0, top: 2.0),
                                 color: Theme.of(context).primaryColor,
                                 child: Column(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
                                   mainAxisAlignment:
-                                  MainAxisAlignment.start,
+                                  MainAxisAlignment.center,
                                   children: <Widget>[
-                                    Text('SubTotal: ' +
-                                        cartData.totalAmount
-                                            .toStringAsFixed(2)),
-                                    cartData.totalAmount > 500
-                                        ? Text('Delivery charge: 00.00 BDT')
-                                        : Text(
-                                        'Delivery charge: 50.00 BDT'),
-                                    cartData.totalAmount > 500
-                                        ? Text(
-                                      'Total amount : ' +
-                                          cartData.totalAmount
-                                              .toStringAsFixed(2),
-                                      style: TextStyle(
-                                          color: Colors.white),
-                                    )
-                                        : Text(
-                                      'Total amount : ' +
-                                          (cartData.totalAmount + 50.00)
-                                              .toStringAsFixed(2),
-                                      style: TextStyle(
-                                          color: Colors.white),
-                                    ),
+                                    cart.items.length > 0  &&  orders.deliveryCharge == null?
+                                    Center(child:Text('SubTotal: ' + cartData.totalAmount.toStringAsFixed(2),style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),))
+                                    :Center(child:Text('SubTotal: ' + (cartData.totalAmount - orders.deliveryCharge).toStringAsFixed(2),style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),)),
+
+
+                                    // orders.deliveryCharge == null
+                                    //     ? Text('Delivery charge: 00.00 BDT')
+                                    //     : Text('Delivery charge: ' + orders.deliveryCharge.toString()),
+                                    // orders.deliveryCharge == null
+                                    //     ? Text('Total amount : ' + cartData.totalAmount.toStringAsFixed(2), style: TextStyle(color: Colors.white),)
+                                    //     : Text('Total amount : ' + (cartData.totalAmount + orders.deliveryCharge).toStringAsFixed(2), style: TextStyle(color: Colors.white),
+                                    // ),
                                   ],
                                 )),
                             Container(

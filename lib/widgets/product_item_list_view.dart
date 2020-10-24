@@ -99,10 +99,10 @@ class _ProductItemListViewState extends State<ProductItemListView>{
                         product.perUnitDiscount,
                         product.vatRate
                     );
-                    Future.delayed(Duration(milliseconds: 200)).then((_) {
-                      if(cart.items.length>0)
-                        _showFlushbar(context,cart);
-                    } );
+                    // Future.delayed(Duration(milliseconds: 200)).then((_) {
+                    //   if(cart.items.length>0)
+                    //     _showFlushbar(context,cart);
+                    // } );
                   },
                 ),
                 Text(cart.items.firstWhere((d) => d.productId == product.id).quantity.toString(),style: TextStyle(fontSize: 20.0),),
@@ -110,10 +110,10 @@ class _ProductItemListViewState extends State<ProductItemListView>{
                   icon: Icon(Icons.remove),
                   onPressed: (){
                     cart.removeSingleItem(product.id);
-                    Future.delayed(Duration(milliseconds: 200)).then((_) {
-                      if(cart.items.length>0)
-                        _showFlushbar(context,cart);
-                    } );
+                    // Future.delayed(Duration(milliseconds: 200)).then((_) {
+                    //   if(cart.items.length>0)
+                    //     _showFlushbar(context,cart);
+                    // } );
                   },
                 ),
               ],
@@ -135,10 +135,10 @@ class _ProductItemListViewState extends State<ProductItemListView>{
                     product.perUnitDiscount,
                     product.vatRate
                 );
-                Future.delayed(Duration(milliseconds: 200)).then((_) {
-                  if(cart.items.length>0)
-                    _showFlushbar(context,cart);
-                } );
+                // Future.delayed(Duration(milliseconds: 200)).then((_) {
+                //   if(cart.items.length>0)
+                //     _showFlushbar(context,cart);
+                // } );
               },
             ),
           ),

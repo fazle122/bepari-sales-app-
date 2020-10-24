@@ -118,10 +118,15 @@ class _updateQuantityDialogState extends State<UpdateQuantityDialog> {
             child: Text('Update'),
             onPressed: () async{
               await DBHelper.updateItemQuantity('cartTable', widget.cartItem.productId, double.parse(quantityController.text));
+              await fetchDeliveryCharge();
               quantityController.clear();
               if (!mounted) return;
               setState(() {
                 _isInit = true;
+              });
+              await Provider.of<Cart>(context,listen: false).fetchAndSetCartItems1();
+              setState(() {
+                _isInit = false;
               });
               Navigator.of(context).pop(true);},),
         ],
@@ -130,188 +135,25 @@ class _updateQuantityDialogState extends State<UpdateQuantityDialog> {
     );
   }
 
-  List<DropdownMenuItem> _districtMenuItems(Map<String, dynamic> items) {
-    List<DropdownMenuItem> itemWidgets = List();
-    items.forEach((key, value) {
-      itemWidgets.add(DropdownMenuItem(
-        value: value,
-        child: Text(value),
-      ));
-    });
-    return itemWidgets;
+  double deliveryCharge;
+  fetchDeliveryCharge() async {
+    final cart = Provider.of<Cart>(context, listen: false);
+    final orders = Provider.of<Orders>(context, listen: false);
+    bool isChargeApplied = cart.items.any((element) => element.productId == '1');
+    if(isChargeApplied) {
+      Map<String, dynamic> data = Map();
+      data.putIfAbsent('amount', () => cart.totalAmount.toDouble());
+      FormData formData = FormData.fromMap(data);
+      var response = await Provider.of<Orders>(context, listen: false)
+          .defaultDeliveryCharge(formData);
+      if (response != null) {
+        setState(() {
+          deliveryCharge = response['data']['product']['unit_price'].toDouble();
+          orders.deliveryCharge = response['data']['product']['unit_price'].toDouble();
+        });
+      }
+    }
   }
 
-  List<DropdownMenuItem> _areaMenuItems(Map<String, dynamic> items) {
-    List<DropdownMenuItem> itemWidgets = List();
-    items.forEach((key, value) {
-      itemWidgets.add(DropdownMenuItem(
-        value: key,
-        child: Text(value),
-      ));
-    });
-    return itemWidgets;
-  }
-
-  Widget districtDropdown(var shippingAddress,Map<String, dynamic> district){
-    return Consumer<ShippingAddress>(
-      builder: (
-          final BuildContext context,
-          final ShippingAddress address,
-          final Widget child,
-          ) {
-        return DropdownButtonFormField(
-
-          isExpanded: true,
-          decoration: InputDecoration(
-            prefixIcon: Icon(
-              Icons.location_city,
-              color: Theme.of(context).primaryColor,
-            ),
-            border: OutlineInputBorder(),
-//                enabledBorder: UnderlineInputBorder(
-//                    borderSide: BorderSide(color: Colors.white))
-          ),
-          hint: Text('Select district'),
-          value: shippingAddress.selectedDistrict,
-          onSaved: (value){
-            shippingAddress.selectedDistrict = value;
-          },
-          validator: (value){
-            if (value == null) {
-              return 'please choose district';
-            }
-            return null;
-          },
-          onChanged: (newValue) {
-            shippingAddress.selectedDistrict = newValue;
-            shippingAddress.selectedArea = null;
-          },
-          items: _districtMenuItems(district),
-        );
-//        return Stack(
-//          children: <Widget>[
-//            Container(
-//                decoration: ShapeDecoration(
-//                  shape: RoundedRectangleBorder(
-//                    side: BorderSide(width: 1.0, style: BorderStyle.solid),
-//                    borderRadius: BorderRadius.all(Radius.circular(5.0)),
-//                  ),
-//                ),
-//                padding: EdgeInsets.only(left: 44.0, right: 10.0),
-////              margin: EdgeInsets.only(left: 16.0, right: 16.0),
-//                child: DropdownButtonFormField(
-//
-//                  isExpanded: true,
-////                icon: Icon(Icons.location_city),
-//                  hint: Text('Select district'),
-//                  value: shippingAddress.selectedDistrict,
-//                  onSaved: (value){
-//                    shippingAddress.selectedDistrict = value;
-//                  },
-//                  validator: (value){
-//                    if (value == null) {
-//                      return 'please choose district';
-//                    }
-//                    return null;
-//                  },
-//                  onChanged: (newValue) {
-//                    shippingAddress.selectedDistrict = newValue;
-//                    shippingAddress.selectedArea = null;
-//                  },
-//                  items: _districtMenuItems(district),
-//                )),
-//            Container(
-//              padding: EdgeInsets.only(top: 24.0, left: 12.0),
-//              child: Icon(
-//                Icons.location_city,
-//                color: Theme.of(context).primaryColor,
-////              size: 20.0,
-//              ),
-//            ),
-//          ],
-//        );
-      },
-    );
-  }
-
-  Widget areaDropdown(var shippingAddress,Map<String, dynamic> areas){
-    return Consumer<ShippingAddress>(
-      builder: (
-          final BuildContext context,
-          final ShippingAddress address,
-          final Widget child,
-          ) {
-        return DropdownButtonFormField(
-          isExpanded: true,
-          decoration: InputDecoration(
-            prefixIcon: Icon(
-              Icons.local_gas_station,
-              color: Theme.of(context).primaryColor,
-            ),
-            border: OutlineInputBorder(),
-//                enabledBorder: UnderlineInputBorder(
-//                    borderSide: BorderSide(color: Colors.white))
-          ),
-          hint: Text('Select area'),
-          value: shippingAddress.selectedArea,
-          onSaved: (value){
-            shippingAddress.selectedArea = value;
-
-          },
-          validator: (value){
-            if (value == null) {
-              return 'please choose area';
-            }
-            return null;
-          },
-          onChanged: (newValue) {
-            shippingAddress.selectedArea = newValue;
-          },
-          items: _areaMenuItems(areas),
-        );
-//        return Stack(
-//          children: <Widget>[
-//            Container(
-//                decoration: ShapeDecoration(
-//                  shape: RoundedRectangleBorder(
-//                    side: BorderSide(width: 1.0, style: BorderStyle.solid),
-//                    borderRadius: BorderRadius.all(Radius.circular(5.0)),
-//                  ),
-//                ),
-//                padding: EdgeInsets.only(left: 44.0, right: 10.0),
-////              margin: EdgeInsets.only(left: 16.0, right: 16.0),
-//                child: DropdownButtonFormField(
-//                  isExpanded: true,
-////                icon: Icon(Icons.local_gas_station),
-//                  hint: Text('Select area'),
-//                  value: shippingAddress.selectedArea,
-//                  onSaved: (value){
-//                    shippingAddress.selectedArea = value;
-//
-//                  },
-//                  validator: (value){
-//                    if (value == null) {
-//                      return 'please choose area';
-//                    }
-//                    return null;
-//                  },
-//                  onChanged: (newValue) {
-//                    shippingAddress.selectedArea = newValue;
-//                  },
-//                  items: _areaMenuItems(areas),
-//                )),
-//            Container(
-//              margin: EdgeInsets.only(top: 24.0, left: 12.0),
-//              child: Icon(
-//                Icons.local_gas_station,
-//                color: Theme.of(context).primaryColor,
-////              size: 20.0,
-//              ),
-//            ),
-//          ],
-//        );
-      },
-    );
-  }
 }
 

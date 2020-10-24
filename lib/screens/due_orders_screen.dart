@@ -48,7 +48,7 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
 
   @override
   void didChangeDependencies() {
-    final orders = Provider.of<Orders>(context, listen: false);
+    final orders = Provider.of<Orders>(context,listen: false);
     if (pageCount == 1) {
       if (_isInit) {
         setState(() {
@@ -56,7 +56,7 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
         });
         Provider.of<Cart>(context, listen: false).fetchAndSetCartItems1();
         Provider.of<Orders>(context, listen: false)
-            .fetchAndSetOrdersTest(filters, pageCount)
+            .fetchAndSetOrdersTest(filters,pageCount)
             .then((data) {
           setState(() {
             finalOrders = data;
@@ -77,7 +77,7 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
         setState(() {
           pageCount += 1;
         });
-        getOrderData(filters, pageCount);
+        getOrderData(filters,pageCount);
       }
 //      }
     });
@@ -92,9 +92,7 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
           isPerformingRequest = true;
         });
       }
-      Provider.of<Orders>(context, listen: false)
-          .fetchAndSetOrdersTest(filters, pageCount)
-          .then((data) {
+      Provider.of<Orders>(context, listen: false).fetchAndSetOrdersTest(filters, pageCount).then((data) {
         isPerformingRequest = false;
         if (data == null || data.isEmpty) {
           if (finalOrders.isNotEmpty) animateScrollBump();
@@ -127,51 +125,12 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
     }
   }
 
-  getData(Map<String, dynamic> filters) {
-    if (_isInit) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = true;
-      });
-      Provider.of<Orders>(context, listen: false)
-          .fetchAndSetOrdersTest(filters, 1)
-          .then((_) {
-        if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-        });
-      });
-    }
-    _isInit = false;
-  }
-
   Future<Map<String, dynamic>> _orderFilterDialog() async {
     return showDialog<Map<String, dynamic>>(
       barrierDismissible: false,
       context: context,
       builder: (BuildContext context) => OrderFilterDialog(),
     );
-  }
-
-  String convert12(String str) {
-    String finalTime;
-    int h1 = int.parse(str.substring(0, 1)) - 0;
-    int h2 = int.parse(str.substring(1, 2));
-    int hh = h1 * 10 + h2;
-
-    String Meridien;
-    if (hh < 12) {
-      Meridien = " AM";
-    } else
-      Meridien = " PM";
-    hh %= 12;
-    if (hh == 0 && Meridien == ' PM') {
-      finalTime = '12' + str.substring(2);
-    } else {
-      finalTime = hh.toString() + str.substring(2);
-    }
-    finalTime = finalTime + Meridien;
-    return finalTime;
   }
 
   Widget _buildProgressIndicator() {
