@@ -64,6 +64,13 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
 
   @override
   void initState() {
+    final orders = Provider.of<Orders>(context, listen:false);
+    if(widget.invoiceId != null){
+      selectedCustomerId = orders.selectedCustomer.toString();
+      selectedBranchId = orders.selectedBranch.toString();
+      print(selectedCustomerId);
+      print(selectedBranchId);
+    }
     super.initState();
   }
 
@@ -182,12 +189,12 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
       maxLines: 5,
       minLines: 3,
       keyboardType: TextInputType.text,
-      validator: (value) {
-        if (value.isEmpty) {
-          return 'please enter comments';
-        }
-        return null;
-      },
+      // validator: (value) {
+      //   if (value.isEmpty) {
+      //     return 'please enter comments';
+      //   }
+      //   return null;
+      // },
       onSaved: (value) {
         comments = value;
       },
@@ -276,6 +283,8 @@ class _CreateOrderScreenState extends BaseState<CreateOrderScreen> {
         FlatButton(
           child: Text(btn1Txt),
           onPressed: () async{
+            print(selectedCustomerId);
+            print(selectedBranchId);
             setState(() {
               _isLoading = true;
             });

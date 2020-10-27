@@ -69,7 +69,7 @@ class OrderDetailScreen extends StatefulWidget {
   }
 
 
-  Widget _soldWithDue(var orderId,var data){
+  Widget _soldWithDue(var orderId,var invoiceData){
     return AlertDialog(
       title: Center(child:Text('Confirm order')),
       content:
@@ -82,7 +82,7 @@ class OrderDetailScreen extends StatefulWidget {
               children: <Widget>[
                 Text('Invoice amount : '),
                 SizedBox(width: 10,),
-                Text(data.invoiceAmount.toString())
+                Text(invoiceData.invoiceAmount.toString())
               ],
             ),
             SizedBox(height: 20,),
@@ -128,14 +128,15 @@ class OrderDetailScreen extends StatefulWidget {
             data.putIfAbsent('receipt_amount', () => amountController.text);
             data.putIfAbsent('comment', () => '');
 
-            FormData formdata = FormData.fromMap(data);
+            FormData formData = FormData.fromMap(data);
             var response;
             if(amountController.text == '' || amountController.text == null) {
               Toast.show('Please enter amount', context, duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
+            }else if(double.parse(amountController.text)>double.parse(invoiceData.invoiceAmount)){
+              Toast.show('Please enter amount not higher than invoice amount', context,duration: Toast.LENGTH_LONG,gravity: Toast.CENTER);
             }else{
               print(amountController.text);
-
-              response = await Provider.of<Orders>(context, listen: false).payOrderWithDue(orderId.toString(),formdata);
+              response = await Provider.of<Orders>(context, listen: false).payOrderWithDue(orderId.toString(),formData);
               amountController.text = null;
               if(response != null){
                 Toast.show(response['msg'], context, duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
@@ -235,6 +236,17 @@ class OrderDetailScreen extends StatefulWidget {
                                 margin: EdgeInsets.all(10),
                                 child: Column(
                                   children: <Widget>[
+                                    orderDetailData.singOrderItem.invoiceItem[i].productID == 1 ?
+                                    ListTile(
+                                        title: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: <Widget>[
+                                            Text(orderDetailData.singOrderItem.invoiceItem[i].productName),
+                                            SizedBox(width: 20.0,),
+                                            Text('\$${(double.parse(orderDetailData.singOrderItem.invoiceItem[i].unitPrice))}'),
+                                          ],
+                                        )
+                                    ):
                                     ListTile(
                                       title: Center(child:Text(orderDetailData.singOrderItem.invoiceItem[i].productName)),
                                       subtitle: Row(
@@ -426,6 +438,8 @@ class OrderDetailScreen extends StatefulWidget {
                                               onPressed: () async{
                                                 if(receiveAmountController.text == '' || receiveAmountController.text == null){
                                                   Toast.show('Please enter received amount', context,duration: Toast.LENGTH_LONG,gravity: Toast.CENTER);
+                                                }else if(double.parse(receiveAmountController.text)>double.parse(orderDetailData.singOrderItem.totalDue)){
+                                                  Toast.show('Please enter amount not higher than due amount', context,duration: Toast.LENGTH_LONG,gravity: Toast.CENTER);
                                                 }else{
                                                 Map<String,dynamic> data = Map();
                                                 // data.putIfAbsent('id', () => orderId.toString());

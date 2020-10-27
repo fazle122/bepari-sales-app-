@@ -382,6 +382,13 @@ class _PendingOrderListScreenState extends BaseState<PendingOrderListScreen> {
                               icon: Icon(Icons.edit),
                               onPressed: () async{
                                 final cart = Provider.of<Cart>(context,listen: false);
+                                final orders = Provider.of<Orders>(context,listen: false);
+
+                                await DBHelper.clearCart();
+                                setState(() {
+                                  orders.deliveryCharge = null;
+
+                                });
 
                                 cart.invoiceIdForUpdate = finalOrders[i].id;
                                 List<Map<String,dynamic>> cartItemFromOrder;

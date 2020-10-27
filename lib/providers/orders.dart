@@ -71,6 +71,17 @@ class Orders with ChangeNotifier {
   final String authToken;
   final String userid;
   double _deliveryCharge;
+  int _selectedCustomerId;
+  int _selectedBranchId;
+
+  int get selectedCustomer{
+    return _selectedCustomerId;
+  }
+
+
+  int get selectedBranch{
+    return _selectedBranchId;
+  }
 
   Orders(this.authToken, this.userid, this._orders);
 
@@ -566,12 +577,13 @@ class Orders with ChangeNotifier {
 
 //          for(int i = 0; i<allOrders['invoice_details'].length; i++){}
     );
-    for(int i =0; i<orderItem.invoiceItem.length; i++){
-      if(orderItem.invoiceItem[i].productID == 1){
-        _deliveryCharge = double.parse(orderItem.invoiceItem[i].unitPrice);
-        notifyListeners();
-      }
-    }
+    // for(int i =0; i<orderItem.invoiceItem.length; i++){
+    //   if(orderItem.invoiceItem[i].productID == 1){
+    //     _deliveryCharge = double.parse(orderItem.invoiceItem[i].unitPrice);
+    //     notifyListeners();
+    //   }
+    // }
+
 
     _orderItem = orderItem;
     notifyListeners();
@@ -617,6 +629,9 @@ class Orders with ChangeNotifier {
       item['orderId'] = orderId.toString();
       cartItems.add(item);
     }
+    _selectedCustomerId = extarctedData['data']['customer']['id'];
+    _selectedBranchId = extarctedData['data']['branch_info']['id'];
+    notifyListeners();
     return cartItems;
   }
 

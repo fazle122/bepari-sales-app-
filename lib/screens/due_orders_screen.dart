@@ -344,24 +344,24 @@ class _DueOrderListScreenState extends BaseState<DueOrderListScreen> {
                                           icon: Icon(Icons.edit),
                                           onPressed: () async {
                                             final cart = Provider.of<Cart>(context,listen: false);
-                                            cart.invoiceIdForUpdate = finalOrders[i].id;
-                                            List<Map<String, dynamic>>
-                                                cartItemFromOrder;
+                                            final orders = Provider.of<Orders>(context,listen: false);
+
                                             await DBHelper.clearCart();
-                                            await Provider.of<Orders>(context,
-                                                    listen: false)
-                                                .fetchOrderForCart(
-                                                    finalOrders[i].id)
+                                            setState(() {
+                                              orders.deliveryCharge = null;
+
+                                            });
+
+                                            cart.invoiceIdForUpdate = finalOrders[i].id;
+                                            List<Map<String, dynamic>> cartItemFromOrder;
+                                            await Provider.of<Orders>(context, listen: false).fetchOrderForCart(finalOrders[i].id)
                                                 .then((data) {
                                               setState(() {
                                                 cartItemFromOrder = data;
                                               });
-                                              cartItemFromOrder
-                                                  .map((cartData) async {
-                                                await DBHelper
-                                                    .createCartFromOrder(
-                                                        CartItem.fromJson(
-                                                            cartData));
+                                              cartItemFromOrder.map((cartData) async {
+                                                await DBHelper.createCartFromOrder(
+                                                    CartItem.fromJson(cartData));
                                               }).toList();
                                             });
 

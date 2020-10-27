@@ -33,7 +33,7 @@ class _CartScreenState extends BaseState<CartScreen> {
   var updatedQuantity;
   bool isUpdateMood = false;
   List<Map<String, dynamic>> cartItemFromOrder = [];
-  double deliveryCharge;
+  // double deliveryCharge;
   TextEditingController quantityController;
 
   @override
@@ -68,13 +68,14 @@ class _CartScreenState extends BaseState<CartScreen> {
           orders.deliveryCharge = cart.items[i].price;
         }
       }
-    }else{
-      if (cart.items.length > 0 && orders.deliveryCharge != null) {
-        fetchDeliveryCharge(cart.totalAmount - orders.deliveryCharge);
-      } else {
-        fetchDeliveryCharge(cart.totalAmount);
-      }
     }
+    // else{
+    //   if (cart.items.length > 0 && orders.deliveryCharge != null) {
+    //     fetchDeliveryCharge(cart.totalAmount - orders.deliveryCharge);
+    //   } else {
+    //     fetchDeliveryCharge(cart.totalAmount);
+    //   }
+    // }
   }
 
   fetchDeliveryCharge(double totalAmount) async {
@@ -90,7 +91,7 @@ class _CartScreenState extends BaseState<CartScreen> {
             .defaultDeliveryCharge(formData);
         if (response != null) {
           setState(() {
-            deliveryCharge = response['data']['product']['unit_price'].toDouble();
+            // deliveryCharge = response['data']['product']['unit_price'].toDouble();
             orders.deliveryCharge = response['data']['product']['unit_price'].toDouble();
           });
         }
@@ -105,7 +106,7 @@ class _CartScreenState extends BaseState<CartScreen> {
     final auth = Provider.of<Auth>(context);
     return Scaffold(
         appBar: AppBar(
-          title: Text('Cart items',),
+          title: Text(cart.isUpdateMode? 'Update cart items':'Cart items',),
           actions: <Widget>[
             InkWell(
               child: Container(
@@ -156,7 +157,10 @@ class _CartScreenState extends BaseState<CartScreen> {
                                 ),
                                 onTap: () async {
                                   await DBHelper.clearCart();
-                                  setState(() {
+                                  // await cart.removeSingleItem('1');
+                                  orders.deliveryCharge = null;
+                                  cart.invoiceIdForUpdate = null;
+                                      setState(() {
                                     cart.isUpdateMode = false;
                                     // orders.deliveryCharge = null;
                                   });
@@ -574,12 +578,12 @@ class _CartScreenState extends BaseState<CartScreen> {
                                           ),
                                         ),
                                         onTap: () {
-                                          auth.isAuth
-                                              ? Navigator.of(context).pushNamed(
-                                                  CreateOrderScreen.routeName,
-                                                  arguments: cart)
-                                              : Navigator.of(context).pushNamed(
-                                                  AuthScreen.routeName);
+                                          cart.invoiceIdForUpdate == null
+                                              ? Navigator.of(context).pushNamed(CreateOrderScreen.routeName, arguments: cart)
+                                              : Navigator.push(context, MaterialPageRoute(builder: (context) => CreateOrderScreen(cart: cart, invoiceId: cart.invoiceIdForUpdate)));
+                                          // auth.isAuth
+                                          //     ? Navigator.of(context).pushNamed(CreateOrderScreen.routeName,arguments: cart)
+                                          //     : Navigator.of(context).pushNamed(AuthScreen.routeName);
                                         },
                                       ),
                                     ),
