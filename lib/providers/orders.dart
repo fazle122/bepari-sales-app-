@@ -83,6 +83,11 @@ class Orders with ChangeNotifier {
     return _selectedBranchId;
   }
 
+  set selectedBranch(var value){
+    _selectedBranchId = value;
+    notifyListeners();
+  }
+
   Orders(this.authToken, this.userid, this._orders);
 
   OrderItem _orderItem;
@@ -700,6 +705,8 @@ class Orders with ChangeNotifier {
         tmp['name'] = info[i]['name'];
         tmp['address'] = info[i]['address'];
         _customerInfo[info[i]['id'].toString()] = tmp;
+        if(i==0)
+          _selectedCustomerId = info[i]['id'];
       }
 
       notifyListeners();
@@ -708,7 +715,7 @@ class Orders with ChangeNotifier {
     }
   }
 
-  Future<void> fetchBranchInfo() async {
+  Future<Map<String,dynamic>> fetchBranchInfo() async {
     final url = 'http://new.bepari.net/demo/api/V1.1/admin/branch/list';
 
     Dio dioService = new Dio();
@@ -722,18 +729,22 @@ class Orders with ChangeNotifier {
       );
       final extractedData = response.data;
       if (extractedData == null) {
-        return;
+        return null;
       }
 
       var info = extractedData['data']['data'];
       for (int i = 0; i < info.length; i++) {
         Map<String, dynamic> tmp = Map();
+        tmp['id'] = info[i]['id'];
         tmp['name'] = info[i]['name'];
         tmp['address'] = info[i]['address_line_1'];
         _branchInfo[info[i]['id'].toString()] = tmp;
+        if(i==0)
+        _selectedBranchId = info[i]['id'];
       }
 
       notifyListeners();
+      return _branchInfo;
     } catch (error) {
       throw (error);
     }

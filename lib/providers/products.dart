@@ -51,6 +51,8 @@ class Products with ChangeNotifier {
 
   List<Product> _items = [];
   int lastPageCount;
+  bool _isList = false;
+
   var _showFavoritesOnly = false;
   Product _productItem;
 
@@ -67,12 +69,19 @@ class Products with ChangeNotifier {
     return lastPageCount;
   }
 
+  bool get isList{
+    return _isList;
+  }
+
+  set isList(value){
+    _isList = value;
+    notifyListeners();
+  }
+
 
 
   Future<List<Product>> fetchAndSetProducts(int pageCount,int catId) async {
-    // var url = 'http://new.bepari.net/demo/api/V1.1/product-catalog/product/list?page_size=30&page=$pageCount&category_id=$catId';
-    var url = 'http://new.bepari.net/demo/api/V1.1/product-catalog/product/dropdown-transaction-sales-app?page_size=30&page=$pageCount&category_id=$catId';
-    // product-catalog/product/dropdown-transaction-sales-app
+    var url = ApiService.BASE_URL + 'api/V1.1/product-catalog/product/dropdown-transaction-sales-app?page_size=30&page=$pageCount&category_id=$catId';
 
     Dio dioService = new Dio();
     dioService.options.headers = {
@@ -92,20 +101,18 @@ class Products with ChangeNotifier {
         final Product product = Product(
           id: allProduct[i]['id'].toString(),
           title: allProduct[i]['name'],
-//          category: allProduct[i]['category_name'],
           productCategoryId: allProduct[i]['product_category_id'].toString(),
           description: allProduct[i]['description'],
           unit: allProduct[i]['unit_name'],
-         price: allProduct[i]['unit_price'].toDouble(),
-          // price: double.parse(allProduct[i]['unit_price']),
+          price: allProduct[i]['unit_price'].toDouble(),
           vatRate: allProduct[i]['vat_rate'].toDouble(),
           isNonInventory: allProduct[i]['is_non_inventory'],
           salesAccountsGroupId: allProduct[i]['sales_accounts_group_id'].toString(),
-//          discount: allProduct[i]['discount_amount'].toDouble(),
           discount: allProduct[i]['discount_amount']!=null ? double.parse(allProduct[i]['discount_amount']): 0,
           discountType: allProduct[i]['discount_type'],
           discountId: allProduct[i]['discount_id'],
-          imageUrl: allProduct[i]['thumb_image']!= null ? ApiService.CDN_URl + 'product-catalog-images/product/' +allProduct[i]['thumb_image']:
+          imageUrl: allProduct[i]['thumb_image']!= null
+              ? ApiService.CDN_URl + 'product-catalog-images/product/' + allProduct[i]['thumb_image']:
           'https://www.jessicagavin.com/wp-content/uploads/2019/02/honey-1-600x900.jpg',
 //          imageUrl: 'https://www.jessicagavin.com/wp-content/uploads/2019/02/honey-1-600x900.jpg',
         );
@@ -120,16 +127,22 @@ class Products with ChangeNotifier {
     }
   }
 
-  Future<List<Product>> searchAndSetProducts({String keyword}) async {
-    var url =
-        'http://new.bepari.net/demo/api/V1.0/product-catalog/product/list-product?page_size=100&keyword=$keyword';
+  Future<List<Product>> searchAndSetProducts({String keyword,int pageCount}) async {
+    // var url = ApiService.BASE_URL + 'api/V1.0/product-catalog/product/list-product?page_size=10&page=$pageCount&keyword=$keyword';
+    var url = ApiService.BASE_URL + 'api/V1.1/product-catalog/product/dropdown-transaction-sales-app?page_size=30&page=$pageCount&keyword=$keyword';
+
+    Dio dioService = new Dio();
+    dioService.options.headers = {
+      'Authorization': 'Bearer ' + authToken,
+      'Content-Type': 'application/json',
+    };
     try {
-      final response = await http.get(url);
-      if(response.statusCode != 200){return null;}
-      final data = json.decode(response.body) as Map<String, dynamic>;
+      final Response response = await dioService.get(url,);
+      final data = response.data as Map<String, dynamic>;
       if (data == null) {
         return null;
       }
+
       final List<Product> loadedProducts = [];
       var allProduct = data['data']['data'];
       for (int i = 0; i < allProduct.length; i++) {
@@ -139,27 +152,67 @@ class Products with ChangeNotifier {
           productCategoryId: allProduct[i]['product_category_id'].toString(),
           description: allProduct[i]['description'],
           unit: allProduct[i]['unit_name'],
-//          price: allProduct[i]['unit_price'].toDouble(),
-          price: double.parse(allProduct[i]['unit_price']),
+          price: allProduct[i]['unit_price'].toDouble(),
           isNonInventory: allProduct[i]['is_non_inventory'],
-//          discount: allProduct[i]['discount_amount'].toDouble(),
-          discount: allProduct[i]['discount_amount']!=null ? double.parse(allProduct[i]['discount_amount']): 0,
+          discount: allProduct[i]['discount_amount'] != null ? double.parse(allProduct[i]['discount_amount']) : 0,
           discountType: allProduct[i]['discount_type'],
           discountId: allProduct[i]['discount_id'],
-          imageUrl: allProduct[i]['thumb_image']!= null ? ApiService.CDN_URl + 'product-catalog-images/product/' +allProduct[i]['thumb_image']:
-          'https://www.jessicagavin.com/wp-content/uploads/2019/02/honey-1-600x900.jpg',
-//          imageUrl: ApiService.CDN_URl + 'product-catalog-images/product/' +allProduct[i]['thumb_image'],
+          imageUrl: allProduct[i]['thumb_image'] != null
+              ? ApiService.CDN_URl + 'product-catalog-images/product/' + allProduct[i]['thumb_image']
+              : 'https://www.jessicagavin.com/wp-content/uploads/2019/02/honey-1-600x900.jpg',
 //          imageUrl: 'https://www.jessicagavin.com/wp-content/uploads/2019/02/honey-1-600x900.jpg',
         );
         loadedProducts.add(product);
       }
       _items = loadedProducts;
       notifyListeners();
-      return  _items;
+      return _items;
     } catch (error) {
       throw (error);
     }
   }
+
+//   Future<List<Product>> searchAndSetProducts({String keyword}) async {
+//     // var url = ApiService.BASE_URL + 'api/V1.0/product-catalog/product/list-product?page_size=10&page=$pageCount&keyword=$keyword';
+//
+//     var url = 'http://new.bepari.net/demo/api/V1.0/product-catalog/product/list-product?page_size=100&keyword=$keyword';
+//     try {
+//       final response = await http.get(url);
+//       if(response.statusCode != 200){return null;}
+//       final data = json.decode(response.body) as Map<String, dynamic>;
+//       if (data == null) {
+//         return null;
+//       }
+//       final List<Product> loadedProducts = [];
+//       var allProduct = data['data']['data'];
+//       for (int i = 0; i < allProduct.length; i++) {
+//         final Product product = Product(
+//           id: allProduct[i]['id'].toString(),
+//           title: allProduct[i]['name'],
+//           productCategoryId: allProduct[i]['product_category_id'].toString(),
+//           description: allProduct[i]['description'],
+//           unit: allProduct[i]['unit_name'],
+// //          price: allProduct[i]['unit_price'].toDouble(),
+//           price: double.parse(allProduct[i]['unit_price']),
+//           isNonInventory: allProduct[i]['is_non_inventory'],
+// //          discount: allProduct[i]['discount_amount'].toDouble(),
+//           discount: allProduct[i]['discount_amount']!=null ? double.parse(allProduct[i]['discount_amount']): 0,
+//           discountType: allProduct[i]['discount_type'],
+//           discountId: allProduct[i]['discount_id'],
+//           imageUrl: allProduct[i]['thumb_image']!= null ? ApiService.CDN_URl + 'product-catalog-images/product/' +allProduct[i]['thumb_image']:
+//           'https://www.jessicagavin.com/wp-content/uploads/2019/02/honey-1-600x900.jpg',
+// //          imageUrl: ApiService.CDN_URl + 'product-catalog-images/product/' +allProduct[i]['thumb_image'],
+// //          imageUrl: 'https://www.jessicagavin.com/wp-content/uploads/2019/02/honey-1-600x900.jpg',
+//         );
+//         loadedProducts.add(product);
+//       }
+//       _items = loadedProducts;
+//       notifyListeners();
+//       return  _items;
+//     } catch (error) {
+//       throw (error);
+//     }
+//   }
 
   Future<Product> fetchSingleProduct(int productId) async {
     final url = 'http://new.bepari.net/demo/api/V1.1/product-catalog/product/view-product/$productId';

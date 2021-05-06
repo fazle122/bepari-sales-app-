@@ -197,16 +197,15 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final products = finalProduct;
     final cart = Provider.of<Cart>(context, listen: false);
     final orders = Provider.of<Orders>(context,listen: false);
-
+    final product = Provider.of<Products>(context,listen:false);
     return Scaffold(
         appBar: AppBar(
           title: Text('Create order'),
           actions: <Widget>[
             IconButton(
-              icon: !_showList
+              icon: product.isList
                   ? Icon(
                 Icons.list,
                 size: 25.0,
@@ -217,9 +216,15 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
               ),
               onPressed: () {
                 if (!mounted) return;
-                setState(() {
-                  _showList = !_showList;
-                });
+                if(product.isList == true){
+                  setState(() {
+                    product.isList = false;
+                  });
+                }else{
+                  setState(() {
+                    product.isList = true;
+                  });
+                }
               },
             ),
             Consumer<Cart>(
@@ -237,7 +242,7 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
             IconButton(
               icon: Icon(Icons.search),
               onPressed: () {
-                showSearch(context: context, delegate: DataSearch(_showList));
+                showSearch(context: context, delegate: DataSearch(product.isList));
               },
             ),
           ],
@@ -254,64 +259,69 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
               child: Column(
                 children: <Widget>[
                   Expanded(
-                      child: queryItemListDataWidget(context)),
+                      child: queryItemListDataWidget(context,product)),
 
                   Consumer<Cart>(
                     builder: (context, cartData, child) =>
                     cartData.items.length > 0
                         ?
-                    Container(
-                        height: 50.0,
-                        color: Theme.of(context).primaryColor,
-                        child: Row(
-                          children: <Widget>[
-                            Container(
-                                width: MediaQuery.of(context).size.width *
-                                    5 /
-                                    7,
-                                padding:
-                                EdgeInsets.only(left: 20.0, top: 2.0),
-                                color: Theme.of(context).primaryColor,
-                                child: Column(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    cart.items.length > 0  &&  orders.deliveryCharge == null?
-                                    Center(child:Text('SubTotal: ' + cartData.totalAmount.toStringAsFixed(2),style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),))
-                                    :Center(child:Text('SubTotal: ' + (cartData.totalAmount - orders.deliveryCharge).toStringAsFixed(2),style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),)),
+                    InkWell(
+                      child: Container(
+                          height: 50.0,
+                          color: Theme.of(context).primaryColor,
+                          child: Row(
+                            children: <Widget>[
+                              Container(
+                                  width: MediaQuery.of(context).size.width *
+                                      5 /
+                                      7,
+                                  padding:
+                                  EdgeInsets.only(left: 20.0, top: 2.0),
+                                  color: Color(0xffFB0084),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      cart.items.length > 0  &&  orders.deliveryCharge == null?
+                                      Center(child:Text('SubTotal: ' + cartData.totalAmount.toStringAsFixed(2),style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),))
+                                          :Center(child:Text('SubTotal: ' + (cartData.totalAmount - orders.deliveryCharge).toStringAsFixed(2),style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),)),
 
 
-                                    // orders.deliveryCharge == null
-                                    //     ? Text('Delivery charge: 00.00 BDT')
-                                    //     : Text('Delivery charge: ' + orders.deliveryCharge.toString()),
-                                    // orders.deliveryCharge == null
-                                    //     ? Text('Total amount : ' + cartData.totalAmount.toStringAsFixed(2), style: TextStyle(color: Colors.white),)
-                                    //     : Text('Total amount : ' + (cartData.totalAmount + orders.deliveryCharge).toStringAsFixed(2), style: TextStyle(color: Colors.white),
-                                    // ),
-                                  ],
-                                )),
-                            Container(
-                              height: MediaQuery.of(context).size.height,
-                              width:
-                              MediaQuery.of(context).size.width * 2 / 7,
-                              color: Theme.of(context).primaryColorDark,
-                              child: InkWell(
-                                child: Center(
-                                  child: Text(
-                                    'Check out',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold),
+                                      // orders.deliveryCharge == null
+                                      //     ? Text('Delivery charge: 00.00 BDT')
+                                      //     : Text('Delivery charge: ' + orders.deliveryCharge.toString()),
+                                      // orders.deliveryCharge == null
+                                      //     ? Text('Total amount : ' + cartData.totalAmount.toStringAsFixed(2), style: TextStyle(color: Colors.white),)
+                                      //     : Text('Total amount : ' + (cartData.totalAmount + orders.deliveryCharge).toStringAsFixed(2), style: TextStyle(color: Colors.white),
+                                      // ),
+                                    ],
+                                  )),
+                              Container(
+                                height: MediaQuery.of(context).size.height,
+                                width:
+                                MediaQuery.of(context).size.width * 2 / 7,
+                                color: Color(0xffB40060),
+                                child: InkWell(
+                                  child: Center(
+                                    child: Text(
+                                      'Check out',
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
+                                    ),
                                   ),
+                                  onTap: () {
+                                    Navigator.of(context)
+                                        .pushNamed(CartScreen.routeName);
+                                  },
                                 ),
-                                onTap: () {
-                                  Navigator.of(context)
-                                      .pushNamed(CartScreen.routeName);
-                                },
                               ),
-                            ),
-                          ],
-                        )): SizedBox(
+                            ],
+                          )),
+                      onTap: () {
+                        Navigator.of(context).pushNamed(CartScreen.routeName);
+                      },
+                    ): SizedBox(
                       width: 0.0,
                       height: 0.0,
                     ),
@@ -324,13 +334,13 @@ class _ProductsOverviewScreenState extends BaseState<ProductsOverviewScreen> {
     );
   }
 
-  Widget queryItemListDataWidget(BuildContext context) {
-    if (finalProduct.isNotEmpty) //has data & performing/not performing
+  Widget queryItemListDataWidget(BuildContext context,Products products) {
+    if (finalProduct.isNotEmpty)
       return ProductItemList(
         productListItems: finalProduct,
         scrollController: _scrollController,
         isPerformingRequest: isPerformingRequest,
-        showList: _showList,
+        showList: products.isList,
       );
     if (isPerformingRequest)
       return Center(
@@ -359,10 +369,10 @@ class ProductItemList extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     return Container
-      (child: showList
+      (child: !showList
         ? productListItems != null && productListItems.length > 0
         ? ListView.builder(
-        padding: const EdgeInsets.all(10.0),
+        // padding: const EdgeInsets.all(10.0),
         controller: scrollController,
         itemCount: productListItems.length+1,
         itemBuilder: (context, i) {
